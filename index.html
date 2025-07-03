@@ -5,7 +5,8 @@
   <title>Geovisor de Poblados</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
   <style>
     * { box-sizing: border-box; }
     
@@ -29,7 +30,7 @@
     }
     
     body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      font-family: system-ui, -apple-system, sans-serif; 
       margin: 0; 
       padding: 0; 
       height: 100vh;
@@ -42,21 +43,10 @@
     .header {
       background: var(--gradient);
       color: white;
-      padding: 1.5rem;
+      padding: 1rem 1.5rem;
       box-shadow: var(--shadow-lg);
       position: relative;
       overflow: hidden;
-    }
-    
-    .header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-      opacity: 0.3;
     }
     
     .header-content {
@@ -69,17 +59,17 @@
     
     .header h1 {
       margin: 0;
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
     }
     
     .stats-quick {
       display: flex;
-      gap: 2rem;
-      font-size: 0.9rem;
+      gap: 1.5rem;
+      font-size: 0.85rem;
     }
     
     .stat-quick {
@@ -87,45 +77,45 @@
     }
     
     .stat-quick-number {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
       display: block;
     }
     
     .controls {
       background: var(--surface);
-      padding: 1.5rem;
+      padding: 1rem;
       border-bottom: 1px solid var(--border);
       box-shadow: var(--shadow);
     }
     
     .controls-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
       margin-bottom: 1rem;
     }
     
     .control-group {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.25rem;
     }
     
     .control-group label {
       font-weight: 600;
       color: var(--text);
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.25rem;
     }
     
     select, input {
-      padding: 0.75rem;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.9rem;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
       transition: all 0.2s;
       background: var(--surface);
     }
@@ -133,12 +123,12 @@
     select:focus, input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }
     
     .controls-actions {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
     }
     
@@ -146,22 +136,21 @@
       background: var(--primary);
       color: white;
       border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: all 0.15s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.25rem;
       text-decoration: none;
     }
     
     .btn:hover {
       background: var(--primary-dark);
       transform: translateY(-1px);
-      box-shadow: var(--shadow);
     }
     
     .btn-secondary {
@@ -184,14 +173,14 @@
       flex: 1;
       display: flex;
       min-height: 0;
-      gap: 1rem;
-      padding: 1rem;
+      gap: 0.75rem;
+      padding: 0.75rem;
     }
     
     .map-container {
       flex: 1;
       background: var(--surface);
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
       box-shadow: var(--shadow-lg);
       position: relative;
@@ -202,25 +191,103 @@
       height: 100%;
       min-height: 500px;
     }
+
+    /* Notificaciones del mapa */
+    .map-notifications {
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      pointer-events: none;
+      width: 100%;
+      max-width: 400px;
+      padding: 0 1rem;
+    }
+
+    .map-notification {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-left: 4px solid transparent;
+      animation: slideInFromTop 0.3s ease-out;
+      max-width: 100%;
+      word-wrap: break-word;
+    }
+
+    @keyframes slideInFromTop {
+      from { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.95); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+
+    @keyframes slideOutToTop {
+      from { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+      to { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.95); 
+      }
+    }
+
+    .map-notification.success {
+      border-left-color: var(--success);
+      color: #065f46;
+    }
+
+    .map-notification.error {
+      border-left-color: var(--error);
+      color: #991b1b;
+    }
+
+    .map-notification.loading {
+      border-left-color: var(--accent);
+      color: #155e75;
+    }
+
+    .map-notification.removing {
+      animation: slideOutToTop 0.2s ease-in forwards;
+    }
     
     .map-overlay {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
+      top: 0.75rem;
+      right: 0.75rem;
       z-index: 1000;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.25rem;
     }
     
     .map-control {
       background: var(--surface);
       border: none;
-      padding: 0.75rem;
-      border-radius: 8px;
+      padding: 0.5rem;
+      border-radius: 6px;
       cursor: pointer;
       box-shadow: var(--shadow);
-      transition: all 0.2s;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .map-control:hover {
@@ -229,9 +296,9 @@
     }
     
     .sidebar {
-      width: 400px;
+      width: 320px;
       background: var(--surface);
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
       box-shadow: var(--shadow-lg);
       display: flex;
@@ -239,48 +306,48 @@
     }
     
     .sidebar-header {
-      padding: 1.5rem;
+      padding: 1rem;
       background: var(--surface-2);
       border-bottom: 1px solid var(--border);
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
     
     .stats-grid {
-      padding: 1.5rem;
+      padding: 1rem;
       background: var(--surface);
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+      gap: 0.75rem;
       border-bottom: 1px solid var(--border);
     }
     
     .stat-card {
       text-align: center;
-      padding: 1rem;
+      padding: 0.75rem;
       background: var(--surface-2);
-      border-radius: 8px;
+      border-radius: 6px;
       border: 1px solid var(--border);
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
     
     .stat-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
       box-shadow: var(--shadow);
     }
     
     .stat-number {
-      font-size: 2rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: var(--primary);
       display: block;
     }
     
     .stat-label {
-      font-size: 0.85rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
       margin-top: 0.25rem;
     }
@@ -292,37 +359,36 @@
     }
     
     .poblado-item {
-      padding: 1.25rem;
+      padding: 0.75rem;
       border-bottom: 1px solid var(--border);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       position: relative;
     }
     
     .poblado-item:hover {
       background: var(--surface-2);
-      transform: translateX(4px);
     }
     
     .poblado-item.selected {
       background: rgba(37, 99, 235, 0.1);
-      border-left: 4px solid var(--primary);
+      border-left: 3px solid var(--primary);
     }
     
     .poblado-name {
-      font-weight: 700;
+      font-weight: 600;
       color: var(--text);
-      margin-bottom: 0.5rem;
-      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.25rem;
     }
     
     .poblado-info {
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.4;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.25rem;
@@ -332,15 +398,15 @@
       display: inline-block;
       background: var(--primary);
       color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
+      padding: 0.125rem 0.375rem;
+      border-radius: 3px;
+      font-size: 0.65rem;
       font-weight: 600;
     }
     
     .loading {
       text-align: center;
-      padding: 3rem;
+      padding: 2rem;
       color: var(--text-muted);
       display: flex;
       flex-direction: column;
@@ -349,10 +415,10 @@
     }
     
     .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--primary);
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top: 2px solid var(--primary);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -362,43 +428,57 @@
       100% { transform: rotate(360deg); }
     }
     
-    .status {
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 0.5rem 1rem;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .status.success { 
-      background: rgba(16, 185, 129, 0.1); 
-      color: #065f46; 
-      border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-    .status.error { 
-      background: rgba(239, 68, 68, 0.1); 
-      color: #991b1b; 
-      border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-    .status.loading { 
-      background: rgba(6, 182, 212, 0.1); 
-      color: #155e75; 
-      border: 1px solid rgba(6, 182, 212, 0.2);
-    }
-
     .distance-info {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--accent);
       font-weight: 600;
     }
+
+    /* Custom cluster styles */
+    .marker-cluster-small {
+      background-color: rgba(37, 99, 235, 0.6);
+    }
+    .marker-cluster-small div {
+      background-color: rgba(37, 99, 235, 0.8);
+    }
+    .marker-cluster-medium {
+      background-color: rgba(16, 185, 129, 0.6);
+    }
+    .marker-cluster-medium div {
+      background-color: rgba(16, 185, 129, 0.8);
+    }
+    .marker-cluster-large {
+      background-color: rgba(245, 158, 11, 0.6);
+    }
+    .marker-cluster-large div {
+      background-color: rgba(245, 158, 11, 0.8);
+    }
+
+    /* Custom marker styles */
+    .custom-marker {
+      background: none !important;
+      border: none !important;
+    }
+
+    .marker-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .marker-ciudad { background: #2563eb; }
+    .marker-pueblo { background: #10b981; }
+    .marker-villa { background: #f59e0b; }
+    .marker-aldea { background: #ef4444; }
+    .marker-default { background: #64748b; }
 
     @media (max-width: 1024px) {
       .main-content {
@@ -406,10 +486,10 @@
       }
       .sidebar {
         width: 100%;
-        height: 400px;
+        height: 300px;
       }
       .controls-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
       }
       .stats-quick {
         display: none;
@@ -418,13 +498,16 @@
 
     @media (max-width: 768px) {
       .header {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
       }
       .header h1 {
         font-size: 1.25rem;
       }
       .controls {
-        padding: 1rem;
+        padding: 0.75rem;
+      }
+      .controls-grid {
+        grid-template-columns: 1fr;
       }
       .main-content {
         padding: 0.5rem;
@@ -437,8 +520,7 @@
   <div class="header">
     <div class="header-content">
       <h1>
-        <i class="fas fa-map-marked-alt"></i>
-        Geovisor de Poblados
+        🗺️ Geovisor de Poblados
       </h1>
       <div class="stats-quick">
         <div class="stat-quick">
@@ -460,65 +542,66 @@
   <div class="controls">
     <div class="controls-grid">
       <div class="control-group">
-        <label><i class="fas fa-map-marker-alt"></i> Provincia</label>
+        <label>📍 Provincia</label>
         <select id="provinciaFilter">
           <option value="">Todas las provincias</option>
         </select>
       </div>
       
       <div class="control-group">
-        <label><i class="fas fa-building"></i> Tipo</label>
+        <label>🏢 Tipo</label>
         <select id="tipoFilter">
           <option value="">Todos los tipos</option>
         </select>
       </div>
       
       <div class="control-group">
-        <label><i class="fas fa-search"></i> Buscar</label>
+        <label>🔍 Buscar</label>
         <input type="text" id="searchInput" placeholder="Nombre del poblado..." />
       </div>
 
       <div class="control-group">
-        <label><i class="fas fa-crosshairs"></i> Radio (km)</label>
+        <label>📏 Radio (km)</label>
         <input type="number" id="radiusInput" placeholder="Radio en km" min="1" max="500" />
       </div>
     </div>
     
     <div class="controls-actions">
       <button class="btn" onclick="aplicarFiltros()">
-        <i class="fas fa-filter"></i> Aplicar Filtros
+        🔎 Filtrar
       </button>
       <button class="btn btn-secondary" onclick="limpiarFiltros()">
-        <i class="fas fa-eraser"></i> Limpiar
+        ❌ Limpiar
       </button>
       <button class="btn btn-success" onclick="buscarCercanos()">
-        <i class="fas fa-location-arrow"></i> Buscar Cercanos
+        📍 Cercanos
       </button>
       <button class="btn btn-secondary" onclick="obtenerUbicacion()">
-        <i class="fas fa-crosshairs"></i> Mi Ubicación
+        🎯 Mi Ubicación
       </button>
     </div>
   </div>
 
-  <div id="status"></div>
-
   <div class="main-content">
     <div class="map-container">
       <div id="map"></div>
+      
+      <!-- Notificaciones flotantes dentro del mapa -->
+      <div id="mapNotifications" class="map-notifications"></div>
+      
       <div class="map-overlay">
         <button class="map-control" onclick="fitAllMarkers()" title="Ver todos">
-          <i class="fas fa-expand-arrows-alt"></i>
+          ⤢
         </button>
         <button class="map-control" onclick="buscarMasCercano()" title="Más cercano">
-          <i class="fas fa-bullseye"></i>
+          🎯
         </button>
       </div>
     </div>
     
     <div class="sidebar">
       <div class="sidebar-header">
-        <i class="fas fa-list"></i>
-        Poblados Encontrados
+        📋 Poblados Encontrados
       </div>
       
       <div class="stats-grid">
@@ -541,9 +624,10 @@
     </div>
   </div>
 
-  <!-- Supabase JS Library -->
+  <!-- Scripts optimizados -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
   <script>
     // Configuración de Supabase
     const SUPABASE_URL = 'https://sbkmybydshshxoiiimve.supabase.co';
@@ -554,12 +638,15 @@
 
     // Variables globales
     let map;
-    let markersLayer;
+    let markersCluster;
     let poblados = [];
     let filteredPoblados = [];
     let selectedPoblado = null;
     let userLocation = null;
-    let currentMode = 'all'; // 'all', 'filtered', 'radius'
+    let currentMode = 'all';
+
+    // Cache para mejorar performance
+    const markerCache = new Map();
 
     // Inicializar la aplicación
     window.addEventListener('DOMContentLoaded', async () => {
@@ -570,16 +657,41 @@
 
     function initMap() {
       // Centrar en Ecuador
-      map = L.map('map').setView([-1.8312, -78.1834], 6);
+      map = L.map('map', {
+        center: [-1.8312, -78.1834],
+        zoom: 6,
+        zoomControl: false,
+        preferCanvas: true // Mejor performance para muchos marcadores
+      });
       
-      // Agregar capa base con mejor estilo
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 18
+      // Agregar control de zoom en posición personalizada
+      L.control.zoom({
+        position: 'bottomright'
       }).addTo(map);
       
-      // Crear grupo de marcadores
-      markersLayer = L.layerGroup().addTo(map);
+      // Usar OpenStreetMap estándar (más rápido y ligero)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18,
+        tileSize: 256,
+        updateWhenZooming: false, // Mejora performance
+        updateWhenIdle: true
+      }).addTo(map);
+      
+      // Crear cluster de marcadores con configuración optimizada
+      markersCluster = L.markerClusterGroup({
+        chunkedLoading: true,
+        chunkDelay: 50,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        removeOutsideVisibleBounds: true, // Mejora performance
+        animate: true,
+        animateAddingMarkers: false // Mejora performance inicial
+      });
+      
+      map.addLayer(markersCluster);
 
       // Eventos del mapa
       map.on('click', onMapClick);
@@ -595,38 +707,38 @@
     }
 
     async function cargarPoblados() {
-      mostrarStatus('loading', 'Cargando poblados desde Supabase...');
+      // Limpiar cualquier notificación anterior
+      const container = document.getElementById('mapNotifications');
+      container.innerHTML = '';
+      
+      const loadingNotification = mostrarNotificacionMapa('loading', 'Cargando poblados...');
 
       try {
-        console.log('Llamando a get_all_poblados via Supabase...');
-        
         const { data, error } = await supabase.rpc('get_all_poblados');
 
-        if (error) {
-          console.error('Error RPC:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         poblados = data || [];
         filteredPoblados = [...poblados];
         
-        mostrarStatus('success', `✅ ${poblados.length} poblados cargados correctamente`);
+        // Remover notificación de carga antes de mostrar éxito
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('success', `${poblados.length} poblados cargados`, 2000);
         
         mostrarPobladosEnMapa();
         actualizarListaPoblados();
         actualizarEstadisticas();
         
       } catch (error) {
-        console.error('Error cargando poblados:', error);
-        mostrarStatus('error', `❌ Error: ${error.message}`);
-        
-        // Fallback: usar consulta REST directa
+        console.error('Error:', error);
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('error', `Error: ${error.message}`);
         await cargarPobladosFallback();
       }
     }
 
     async function cargarPobladosFallback() {
-      mostrarStatus('loading', 'Intentando carga alternativa...');
+      const loadingNotification = mostrarNotificacionMapa('loading', 'Carga alternativa...');
 
       try {
         const { data, error } = await supabase
@@ -635,7 +747,6 @@
 
         if (error) throw error;
 
-        // Convertir datos al formato esperado
         poblados = data.map(poblado => ({
           ...poblado,
           geom_geojson: poblado.geom
@@ -643,90 +754,735 @@
         
         filteredPoblados = [...poblados];
         
-        mostrarStatus('success', `✅ ${poblados.length} poblados cargados (modo compatibilidad)`);
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('success', `${poblados.length} poblados (modo compatibilidad)`, 2500);
         
         mostrarPobladosEnMapa();
         actualizarListaPoblados();
         actualizarEstadisticas();
         
       } catch (error) {
-        mostrarStatus('error', `❌ Error en carga alternativa: ${error.message}`);
-        console.error('Error en fallback:', error);
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('error', `Error: ${error.message}`);
       }
     }
 
     async function cargarProvincias() {
       try {
         const { data, error } = await supabase.rpc('get_unique_provincias');
-
         if (!error && data) {
           const select = document.getElementById('provinciaFilter');
           select.innerHTML = '<option value="">Todas las provincias</option>' +
             data.map(p => `<option value="${p.provincia}">${p.provincia}</option>`).join('');
         }
       } catch (error) {
-        console.error('Error cargando provincias:', error);
+        console.error('Error provincias:', error);
       }
     }
 
     async function cargarTipos() {
       try {
         const { data, error } = await supabase.rpc('get_unique_tipos');
-
         if (!error && data) {
           const select = document.getElementById('tipoFilter');
           select.innerHTML = '<option value="">Todos los tipos</option>' +
             data.map(t => `<option value="${t.tipo}">${t.tipo}</option>`).join('');
         }
       } catch (error) {
-        console.error('Error cargando tipos:', error);
+        console.error('Error tipos:', error);
       }
     }
 
     async function cargarEstadisticas() {
       try {
         const { data, error } = await supabase.rpc('get_poblados_stats');
-
         if (!error && data && data.length > 0) {
           const stats = data[0];
           document.getElementById('headerTotal').textContent = stats.total_poblados;
           document.getElementById('headerProvincias').textContent = stats.total_provincias;
         }
       } catch (error) {
-        console.error('Error cargando estadísticas:', error);
+        console.error('Error estadísticas:', error);
       }
     }
 
     function mostrarPobladosEnMapa() {
-      markersLayer.clearLayers();
+      // Limpiar cluster
+      markersCluster.clearLayers();
+      markerCache.clear();
       
-      filteredPoblados.forEach(poblado => {
-        const geom = poblado.geom_geojson || poblado.geom;
+      // Procesar en lotes para mejor performance
+      const batchSize = 100;
+      let batchIndex = 0;
+      
+      function processBatch() {
+        const start = batchIndex * batchSize;
+        const end = Math.min(start + batchSize, filteredPoblados.length);
         
-        if (geom && geom.coordinates) {
-          const [lng, lat] = geom.coordinates;
+        for (let i = start; i < end; i++) {
+          const poblado = filteredPoblados[i];
+          const geom = poblado.geom_geojson || poblado.geom;
           
-          const icon = L.divIcon({
-            html: `<div style="background: #2563eb; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">${getIconForType(poblado.tipo)}</div>`,
-            className: 'custom-marker',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-          });
+          if (geom && geom.coordinates) {
+            const [lng, lat] = geom.coordinates;
+            const marker = createOptimizedMarker(poblado, lat, lng);
+            markersCluster.addLayer(marker);
+          }
+        }
+        
+        batchIndex++;
+        
+        if (end < filteredPoblados.length) {
+          requestAnimationFrame(processBatch);
+        }
+      }
+      
+      processBatch();
+      llenarFiltrosFallback();
+    }
+
+    function createOptimizedMarker(poblado, lat, lng) {
+      const cacheKey = `${poblado.gid}_${lat}_${lng}`;
+      
+      if (markerCache.has(cacheKey)) {
+        return markerCache.get(cacheKey);
+      }
+      
+      const tipo = poblado.tipo?.toLowerCase() || 'default';
+      const icon = L.divIcon({
+        html: `<div class="marker-icon marker-${tipo}">${getIconEmoji(tipo)}</div>`,
+        className: 'custom-marker',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+      
+      const marker = L.marker([lat, lng], { icon })
+        .bindPopup(() => createPopupContent(poblado), {
+          maxWidth: 250,
+          className: 'custom-popup'
+        });
+        
+      // Almacenar referencia del poblado en el marcador
+      marker.poblado = poblado;
+      
+      // Evento de clic en el marcador
+      marker.on('click', () => {
+        selectPobladoFromMap(poblado);
+      });
+      
+      markerCache.set(cacheKey, marker);
+      return marker;
+    }
+
+    function selectPobladoFromMap(poblado) {
+      selectedPoblado = poblado;
+      
+      // Actualizar selección visual en la lista
+      document.querySelectorAll('.poblado-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      const selectedItem = Array.from(document.querySelectorAll('.poblado-item'))
+        .find(item => item.textContent.includes(poblado.nombre));
+      if (selectedItem) {
+        selectedItem.classList.add('selected');
+        selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      mostrarNotificacionMapa('success', `📍 ${poblado.nombre}`, 2000);
+    }
+
+    function getIconEmoji(tipo) {
+      const icons = {
+        'ciudad': '🏙',
+        'pueblo': '🏘',
+        'villa': '🏡',
+        'aldea': '🏠',
+        'default': '📍'
+      };
+      return icons[tipo] || icons.default;
+    }
+
+    function createPopupContent(poblado) {
+      let distanceText = '';
+      if (poblado.distance_meters !== undefined) {
+        const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
+        distanceText = `<div class="distance-info">📏 ${distanceKm} km</div>`;
+      }
+
+      return `
+        <div style="min-width: 200px; font-family: system-ui, sans-serif;">
+          <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 1rem; display: flex; align-items: center; gap: 4px;">
+            ${getIconEmoji(poblado.tipo?.toLowerCase())} ${poblado.nombre}
+          </h3>
+          ${distanceText}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.8rem;">
+            <div><strong>Código:</strong> ${poblado.f_code || 'N/A'}</div>
+            <div><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</div>
+            <div><strong>Tipo:</strong> ${poblado.tipo || 'N/A'}</div>
+            <div><strong>SOC:</strong> ${poblado.soc || 'N/A'}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function actualizarListaPoblados() {
+      const lista = document.getElementById('pobladoList');
+      
+      if (filteredPoblados.length === 0) {
+        lista.innerHTML = `
+          <div class="loading">
+            🔍
+            <div>No se encontraron poblados</div>
+          </div>
+        `;
+        return;
+      }
+      
+      // Limitar la lista para mejor performance
+      const maxItems = 100;
+      const itemsToShow = filteredPoblados.slice(0, maxItems);
+      
+      lista.innerHTML = itemsToShow.map((poblado, index) => {
+        let distanceText = '';
+        if (poblado.distance_meters !== undefined) {
+          const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
+          distanceText = `<div class="distance-info">📏 ${distanceKm} km</div>`;
+        }
+
+        // Usar un identificador simple y seguro
+        return `
+          <div class="poblado-item" onclick="selectPobladoFromList('${poblado.gid || index}', '${poblado.nombre}', ${poblado.geom_geojson?.coordinates?.[1] || 'null'}, ${poblado.geom_geojson?.coordinates?.[0] || 'null'})">
+            <div class="poblado-name">
+              ${getIconEmoji(poblado.tipo?.toLowerCase())} ${poblado.nombre}
+              <span class="poblado-tag">${poblado.tipo || 'N/A'}</span>
+            </div>
+            <div class="poblado-info">
+              <div><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</div>
+              <div><strong>Código:</strong> ${poblado.f_code || 'N/A'}</div>
+              <div><strong>SOC:</strong> ${poblado.soc || 'N/A'}</div>
+              ${distanceText}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      if (filteredPoblados.length > maxItems) {
+        lista.innerHTML += `
+          <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+            Mostrando ${maxItems} de ${filteredPoblados.length} poblados
+          </div>
+        `;
+      }
+    }
+
+    // Nueva función simplificada para selección desde la lista
+    function selectPobladoFromList(gid, nombre, lat, lng) {
+      console.log('Seleccionando poblado:', { gid, nombre, lat, lng });
+      
+      // Buscar el poblado completo en el array
+      const poblado = filteredPoblados.find(p => 
+        (p.gid && p.gid == gid) || 
+        p.nombre === nombre
+      );
+      
+      if (!poblado) {
+        console.error('Poblado no encontrado:', nombre);
+        mostrarNotificacionMapa('error', 'No se pudo encontrar el poblado');
+        return;
+      }
+      
+      selectedPoblado = poblado;
+      
+      // Actualizar selección visual en la lista
+      document.querySelectorAll('.poblado-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      const selectedItem = Array.from(document.querySelectorAll('.poblado-item'))
+        .find(item => item.textContent.includes(nombre));
+      if (selectedItem) {
+        selectedItem.classList.add('selected');
+      }
+      
+      // Verificar coordenadas
+      if (!lat || !lng || lat === 'null' || lng === 'null') {
+        console.error('Coordenadas inválidas:', { lat, lng });
+        mostrarNotificacionMapa('error', 'Coordenadas no disponibles');
+        return;
+      }
+      
+      const targetLat = parseFloat(lat);
+      const targetLng = parseFloat(lng);
+      
+      // Mostrar notificación de carga
+      const loadingNotification = mostrarNotificacionMapa('loading', `Ubicando ${nombre}...`);
+      
+      console.log('Buscando marcador en coordenadas:', { targetLat, targetLng });
+      
+      // Buscar el marcador en el cluster con mejor algoritmo
+      const targetMarker = findMarkerInClusterImproved(gid, targetLat, targetLng, nombre);
+      
+      if (targetMarker) {
+        console.log('Marcador encontrado, expandiendo cluster...');
+        
+        // Usar el método más confiable del cluster
+        markersCluster.zoomToShowLayer(targetMarker, (completedCallback) => {
+          console.log('Zoom completado, abriendo popup...');
           
-          const marker = L.marker([lat, lng], { icon })
-            .bindPopup(createPopupContent(poblado), {
-              maxWidth: 300,
-              className: 'custom-popup'
-            })
-            .addTo(markersLayer);
-            
-          marker.poblado = poblado;
-          marker.on('click', () => selectPoblado(poblado));
+          // Remover notificación de carga
+          removerNotificacionMapa(loadingNotification);
+          
+          // Pequeño delay para asegurar que el zoom se complete
+          setTimeout(() => {
+            targetMarker.openPopup();
+            highlightMarker(targetMarker);
+            mostrarNotificacionMapa('success', `📍 ${nombre}`, 2000);
+          }, 100);
+        });
+        
+      } else {
+        console.log('Marcador no encontrado, usando fallback...');
+        
+        // Remover notificación de carga
+        removerNotificacionMapa(loadingNotification);
+        
+        // Fallback: centrar manualmente y crear highlight
+        map.setView([targetLat, targetLng], 12);
+        
+        // Crear un highlight manual en las coordenadas
+        const fallbackHighlight = L.circleMarker([targetLat, targetLng], {
+          radius: 15,
+          fillColor: '#ef4444',
+          fillOpacity: 0.6,
+          color: '#ef4444',
+          weight: 3,
+          opacity: 1
+        }).addTo(map).bindPopup(`📍 ${nombre}`).openPopup();
+        
+        // Remover después de 5 segundos
+        setTimeout(() => {
+          map.removeLayer(fallbackHighlight);
+        }, 5000);
+        
+        mostrarNotificacionMapa('info', `📍 ${nombre} (ubicación aproximada)`, 2500);
+      }
+    }
+
+    function findMarkerInClusterImproved(gid, targetLat, targetLng, nombre) {
+      console.log('Buscando marcador con criterios:', { gid, targetLat, targetLng, nombre });
+      
+      let foundMarker = null;
+      let allMarkers = [];
+      
+      // Recopilar todos los marcadores del cluster
+      markersCluster.eachLayer(layer => {
+        if (layer.poblado) {
+          allMarkers.push(layer);
         }
       });
+      
+      console.log('Total marcadores en cluster:', allMarkers.length);
+      
+      // Búsqueda por múltiples criterios
+      for (let marker of allMarkers) {
+        const poblado = marker.poblado;
+        const latLng = marker.getLatLng();
+        
+        // Criterio 1: Por GID exacto
+        if (gid && poblado.gid && poblado.gid == gid) {
+          console.log('Encontrado por GID:', gid);
+          foundMarker = marker;
+          break;
+        }
+        
+        // Criterio 2: Por nombre exacto
+        if (poblado.nombre === nombre) {
+          console.log('Encontrado por nombre:', nombre);
+          foundMarker = marker;
+          break;
+        }
+        
+        // Criterio 3: Por coordenadas con tolerancia amplia
+        const tolerance = 0.001; // Tolerancia más amplia
+        if (Math.abs(latLng.lat - targetLat) < tolerance && 
+            Math.abs(latLng.lng - targetLng) < tolerance) {
+          console.log('Encontrado por coordenadas:', { lat: latLng.lat, lng: latLng.lng });
+          foundMarker = marker;
+          break;
+        }
+      }
+      
+      if (!foundMarker) {
+        console.log('Marcador no encontrado con ningún criterio');
+        console.log('Marcadores disponibles:', allMarkers.map(m => ({
+          nombre: m.poblado?.nombre,
+          gid: m.poblado?.gid,
+          coords: m.getLatLng()
+        })));
+      }
+      
+      return foundMarker;
+    }
 
-      // Llenar filtros si están vacíos
-      llenarFiltrosFallback();
+    function selectPoblado(poblado) {
+      if (typeof poblado === 'string') {
+        poblado = JSON.parse(decodeURIComponent(poblado));
+      }
+      
+      selectedPoblado = poblado;
+      
+      // Actualizar selección visual en la lista
+      document.querySelectorAll('.poblado-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      const selectedItem = Array.from(document.querySelectorAll('.poblado-item'))
+        .find(item => item.textContent.includes(poblado.nombre));
+      if (selectedItem) {
+        selectedItem.classList.add('selected');
+        selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      // Buscar y mostrar en el mapa
+      const geom = poblado.geom_geojson || poblado.geom;
+      if (geom && geom.coordinates) {
+        const [lng, lat] = geom.coordinates;
+        
+        // Buscar el marcador específico en el cluster
+        const targetMarker = findMarkerInClusterImproved(poblado.gid, lat, lng, poblado.nombre);
+        
+        if (targetMarker) {
+          // Si está en un cluster, expandirlo y hacer zoom
+          markersCluster.zoomToShowLayer(targetMarker, () => {
+            // Abrir popup después del zoom
+            setTimeout(() => {
+              targetMarker.openPopup();
+              
+              // Highlighting temporal del marcador
+              highlightMarker(targetMarker);
+            }, 300);
+          });
+        } else {
+          // Fallback: centrar en las coordenadas
+          map.setView([lat, lng], 14);
+        }
+        
+        mostrarNotificacionMapa('success', `📍 ${poblado.nombre}`, 2000);
+      }
+    }
+
+    function highlightMarker(marker) {
+      // Crear un círculo temporal para highlighting
+      const latLng = marker.getLatLng();
+      const highlightCircle = L.circleMarker(latLng, {
+        radius: 20,
+        fillColor: '#f59e0b',
+        fillOpacity: 0.4,
+        color: '#f59e0b',
+        weight: 3,
+        opacity: 0.9
+      }).addTo(map);
+      
+      // Animar el círculo con pulsaciones más visibles
+      let scale = 1;
+      let pulseCount = 0;
+      const maxPulses = 6;
+      
+      const pulseInterval = setInterval(() => {
+        scale = scale === 1 ? 1.8 : 1;
+        const opacity = scale === 1 ? 0.9 : 0.5;
+        
+        highlightCircle.setRadius(20 * scale);
+        highlightCircle.setStyle({ 
+          fillOpacity: opacity * 0.4,
+          opacity: opacity 
+        });
+        
+        pulseCount++;
+        
+        if (pulseCount >= maxPulses) {
+          clearInterval(pulseInterval);
+          // Fade out final
+          setTimeout(() => {
+            if (map.hasLayer(highlightCircle)) {
+              map.removeLayer(highlightCircle);
+            }
+          }, 500);
+        }
+      }, 400);
+    }
+
+    async function aplicarFiltros() {
+      const provincia = document.getElementById('provinciaFilter').value;
+      const tipo = document.getElementById('tipoFilter').value;
+      const busqueda = document.getElementById('searchInput').value;
+
+      if (!provincia && !tipo && !busqueda) {
+        filteredPoblados = [...poblados];
+        currentMode = 'all';
+      } else {
+        currentMode = 'filtered';
+        const loadingNotification = mostrarNotificacionMapa('loading', 'Aplicando filtros...');
+
+        try {
+          const { data, error } = await supabase.rpc('search_poblados_advanced', {
+            search_name: busqueda || null,
+            filter_provincia: provincia || null,
+            filter_tipo: tipo || null
+          });
+
+          if (error) throw error;
+
+          filteredPoblados = data || [];
+          removerNotificacionMapa(loadingNotification);
+          mostrarNotificacionMapa('success', `${filteredPoblados.length} poblados encontrados`, 2000);
+          
+        } catch (error) {
+          // Fallback: filtrado local
+          filteredPoblados = poblados.filter(poblado => {
+            const matchProvincia = !provincia || poblado.provincia === provincia;
+            const matchTipo = !tipo || poblado.tipo === tipo;
+            const matchBusqueda = !busqueda || poblado.nombre.toLowerCase().includes(busqueda.toLowerCase());
+            
+            return matchProvincia && matchTipo && matchBusqueda;
+          });
+          removerNotificacionMapa(loadingNotification);
+          mostrarNotificacionMapa('success', `${filteredPoblados.length} poblados (filtrado local)`, 2000);
+        }
+      }
+
+      mostrarPobladosEnMapa();
+      actualizarListaPoblados();
+      actualizarEstadisticas();
+    }
+
+    function limpiarFiltros() {
+      document.getElementById('provinciaFilter').value = '';
+      document.getElementById('tipoFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('radiusInput').value = '';
+      userLocation = null;
+      currentMode = 'all';
+      
+      // Limpiar marcadores adicionales
+      if (window.userMarker) {
+        map.removeLayer(window.userMarker);
+        window.userMarker = null;
+      }
+      if (window.radiusCircle) {
+        map.removeLayer(window.radiusCircle);
+        window.radiusCircle = null;
+      }
+      
+      aplicarFiltros();
+    }
+
+    async function buscarCercanos() {
+      const radius = document.getElementById('radiusInput').value;
+      
+      if (!userLocation) {
+        mostrarNotificacionMapa('error', 'Primero obtén tu ubicación o haz clic en el mapa');
+        return;
+      }
+      
+      if (!radius || radius <= 0) {
+        mostrarNotificacionMapa('error', 'Ingresa un radio válido en km');
+        return;
+      }
+
+      currentMode = 'radius';
+      const loadingNotification = mostrarNotificacionMapa('loading', `Buscando en ${radius} km...`);
+
+      try {
+        const { data, error } = await supabase.rpc('get_poblados_within_radius', {
+          center_lat: userLocation.lat,
+          center_lon: userLocation.lng,
+          radius_meters: radius * 1000
+        });
+
+        if (error) throw error;
+
+        filteredPoblados = data || [];
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('success', `${filteredPoblados.length} poblados en ${radius} km`, 2500);
+        
+        mostrarPobladosEnMapa();
+        actualizarListaPoblados();
+        actualizarEstadisticas();
+        
+        // Agregar círculo de radio
+        if (window.radiusCircle) {
+          map.removeLayer(window.radiusCircle);
+        }
+        window.radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+          radius: radius * 1000,
+          fillColor: '#2563eb',
+          fillOpacity: 0.1,
+          color: '#2563eb',
+          weight: 2,
+          dashArray: '5, 5'
+        }).addTo(map);
+        
+        // Ajustar vista
+        const bounds = window.radiusCircle.getBounds();
+        map.fitBounds(bounds, { padding: [20, 20] });
+        
+      } catch (error) {
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('error', `Error: ${error.message}`);
+      }
+    }
+
+    async function buscarMasCercano() {
+      if (!userLocation) {
+        mostrarNotificacionMapa('error', 'Primero obtén tu ubicación');
+        return;
+      }
+
+      const loadingNotification = mostrarNotificacionMapa('loading', 'Buscando más cercano...');
+
+      try {
+        const { data, error } = await supabase.rpc('get_nearest_poblado', {
+          lat: userLocation.lat,
+          lon: userLocation.lng
+        });
+
+        if (error) throw error;
+
+        removerNotificacionMapa(loadingNotification);
+
+        if (data && data.length > 0) {
+          const poblado = data[0];
+          selectPoblado(poblado);
+          
+          const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
+          mostrarNotificacionMapa('success', `Más cercano: ${poblado.nombre} (${distanceKm} km)`, 3000);
+        } else {
+          mostrarNotificacionMapa('error', 'No se encontró poblado cercano');
+        }
+        
+      } catch (error) {
+        removerNotificacionMapa(loadingNotification);
+        mostrarNotificacionMapa('error', `Error: ${error.message}`);
+      }
+    }
+
+    function obtenerUbicacion() {
+      if (!navigator.geolocation) {
+        mostrarNotificacionMapa('error', 'Geolocalización no soportada');
+        return;
+      }
+
+      const loadingNotification = mostrarNotificacionMapa('loading', 'Obteniendo ubicación...');
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          removerNotificacionMapa(loadingNotification);
+          mostrarNotificacionMapa('success', 'Ubicación obtenida', 2000);
+          
+          // Agregar marcador de usuario
+          if (window.userMarker) {
+            map.removeLayer(window.userMarker);
+          }
+          
+          window.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+            icon: L.divIcon({
+              html: `<div style="background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); animation: pulse 2s infinite;">👤</div>`,
+              className: 'user-marker',
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            })
+          }).addTo(map).bindPopup('📍 Tu ubicación');
+          
+          map.setView([userLocation.lat, userLocation.lng], 10);
+        },
+        (error) => {
+          removerNotificacionMapa(loadingNotification);
+          let mensaje = 'Error de ubicación';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              mensaje = 'Permiso denegado. Haz clic en el mapa.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              mensaje = 'Ubicación no disponible.';
+              break;
+            case error.TIMEOUT:
+              mensaje = 'Tiempo agotado.';
+              break;
+          }
+          mostrarNotificacionMapa('error', mensaje);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
+
+    function onMapClick(e) {
+      userLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+      
+      if (window.userMarker) {
+        map.removeLayer(window.userMarker);
+      }
+      
+      window.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+        icon: L.divIcon({
+          html: `<div style="background: #f59e0b; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎯</div>`,
+          className: 'search-marker',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        })
+      }).addTo(map).bindPopup('🎯 Punto seleccionado');
+      
+      mostrarNotificacionMapa('success', 'Punto seleccionado', 1500);
+    }
+
+    function fitAllMarkers() {
+      if (filteredPoblados.length === 0) {
+        mostrarNotificacionMapa('error', 'No hay poblados para mostrar');
+        return;
+      }
+      
+      // Obtener todos los marcadores visibles del cluster
+      const allMarkers = [];
+      markersCluster.eachLayer(layer => {
+        if (layer.getLatLng) {
+          allMarkers.push(layer);
+        }
+      });
+      
+      if (allMarkers.length > 0) {
+        const group = new L.featureGroup(allMarkers);
+        if (group.getBounds().isValid()) {
+          map.fitBounds(group.getBounds(), { 
+            padding: [20, 20],
+            maxZoom: 12 // Evitar zoom excesivo
+          });
+          mostrarNotificacionMapa('success', 'Vista ajustada a todos los poblados', 2000);
+        }
+      } else {
+        // Fallback: usar coordenadas de los datos
+        const bounds = L.latLngBounds();
+        filteredPoblados.forEach(poblado => {
+          const geom = poblado.geom_geojson || poblado.geom;
+          if (geom && geom.coordinates) {
+            const [lng, lat] = geom.coordinates;
+            bounds.extend([lat, lng]);
+          }
+        });
+        
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { 
+            padding: [20, 20],
+            maxZoom: 12
+          });
+          mostrarNotificacionMapa('success', 'Vista ajustada', 2000);
+        }
+      }
     }
 
     function llenarFiltrosFallback() {
@@ -746,356 +1502,17 @@
       }
     }
 
-    function getIconForType(tipo) {
-      const icons = {
-        'ciudad': '🏙',
-        'pueblo': '🏘',
-        'villa': '🏡',
-        'aldea': '🏠',
-        'default': '📍'
-      };
-      return icons[tipo?.toLowerCase()] || icons.default;
-    }
-
-    function createPopupContent(poblado) {
-      let distanceText = '';
-      if (userLocation && poblado.distance_meters !== undefined) {
-        const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
-        distanceText = `<div class="distance-info"><i class="fas fa-route"></i> ${distanceKm} km</div>`;
-      }
-
-      return `
-        <div style="min-width: 250px; font-family: 'Segoe UI', sans-serif;">
-          <h3 style="margin: 0 0 12px 0; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-            ${getIconForType(poblado.tipo)} ${poblado.nombre}
-          </h3>
-          ${distanceText}
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem;">
-            <div><strong>Código:</strong> ${poblado.f_code || 'N/A'}</div>
-            <div><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</div>
-            <div><strong>Tipo:</strong> ${poblado.tipo || 'N/A'}</div>
-            <div><strong>SOC:</strong> ${poblado.soc || 'N/A'}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    function actualizarListaPoblados() {
-      const lista = document.getElementById('pobladoList');
-      
-      if (filteredPoblados.length === 0) {
-        lista.innerHTML = `
-          <div class="loading">
-            <i class="fas fa-search" style="font-size: 2rem; color: #64748b;"></i>
-            <div>No se encontraron poblados con los filtros aplicados</div>
-          </div>
-        `;
-        return;
-      }
-      
-      lista.innerHTML = filteredPoblados.map(poblado => {
-        let distanceText = '';
-        if (poblado.distance_meters !== undefined) {
-          const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
-          distanceText = `<div class="distance-info">📍 ${distanceKm} km</div>`;
-        }
-
-        return `
-          <div class="poblado-item" onclick="selectPoblado(${encodeURIComponent(JSON.stringify(poblado))})">
-            <div class="poblado-name">
-              ${getIconForType(poblado.tipo)} ${poblado.nombre}
-              <span class="poblado-tag">${poblado.tipo || 'N/A'}</span>
-            </div>
-            <div class="poblado-info">
-              <div><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</div>
-              <div><strong>Código:</strong> ${poblado.f_code || 'N/A'}</div>
-              <div><strong>SOC:</strong> ${poblado.soc || 'N/A'}</div>
-              ${distanceText}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function selectPoblado(poblado) {
-      if (typeof poblado === 'string') {
-        poblado = JSON.parse(decodeURIComponent(poblado));
-      }
-      
-      selectedPoblado = poblado;
-      
-      // Actualizar selección visual
-      document.querySelectorAll('.poblado-item').forEach(item => {
-        item.classList.remove('selected');
-      });
-      
-      const selectedItem = Array.from(document.querySelectorAll('.poblado-item'))
-        .find(item => item.textContent.includes(poblado.nombre));
-      if (selectedItem) {
-        selectedItem.classList.add('selected');
-        selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      
-      // Centrar mapa
-      const geom = poblado.geom_geojson || poblado.geom;
-      if (geom && geom.coordinates) {
-        const [lng, lat] = geom.coordinates;
-        map.setView([lat, lng], 14);
-      }
-    }
-
-    async function aplicarFiltros() {
-      const provincia = document.getElementById('provinciaFilter').value;
-      const tipo = document.getElementById('tipoFilter').value;
-      const busqueda = document.getElementById('searchInput').value;
-
-      if (!provincia && !tipo && !busqueda) {
-        filteredPoblados = [...poblados];
-        currentMode = 'all';
-      } else {
-        currentMode = 'filtered';
-        mostrarStatus('loading', 'Aplicando filtros...');
-
-        try {
-          const { data, error } = await supabase.rpc('search_poblados_advanced', {
-            search_name: busqueda || null,
-            filter_provincia: provincia || null,
-            filter_tipo: tipo || null
-          });
-
-          if (error) throw error;
-
-          filteredPoblados = data || [];
-          mostrarStatus('success', `✅ Filtros aplicados: ${filteredPoblados.length} poblados encontrados`);
-          
-        } catch (error) {
-          console.log('Usando filtrado local:', error.message);
-          // Fallback: filtrado local
-          filteredPoblados = poblados.filter(poblado => {
-            const matchProvincia = !provincia || poblado.provincia === provincia;
-            const matchTipo = !tipo || poblado.tipo === tipo;
-            const matchBusqueda = !busqueda || poblado.nombre.toLowerCase().includes(busqueda.toLowerCase());
-            
-            return matchProvincia && matchTipo && matchBusqueda;
-          });
-          mostrarStatus('success', `✅ ${filteredPoblados.length} poblados encontrados (filtrado local)`);
-        }
-      }
-
-      mostrarPobladosEnMapa();
-      actualizarListaPoblados();
-      actualizarEstadisticas();
-    }
-
-    function limpiarFiltros() {
-      document.getElementById('provinciaFilter').value = '';
-      document.getElementById('tipoFilter').value = '';
-      document.getElementById('searchInput').value = '';
-      document.getElementById('radiusInput').value = '';
-      userLocation = null;
-      currentMode = 'all';
-      
-      // Limpiar marcadores y círculos adicionales
-      if (window.userMarker) {
-        map.removeLayer(window.userMarker);
-        window.userMarker = null;
-      }
-      if (window.radiusCircle) {
-        map.removeLayer(window.radiusCircle);
-        window.radiusCircle = null;
-      }
-      
-      aplicarFiltros();
-    }
-
-    async function buscarCercanos() {
-      const radius = document.getElementById('radiusInput').value;
-      
-      if (!userLocation) {
-        mostrarStatus('error', '❌ Primero obtén tu ubicación o haz clic en el mapa');
-        return;
-      }
-      
-      if (!radius || radius <= 0) {
-        mostrarStatus('error', '❌ Ingresa un radio válido en km');
-        return;
-      }
-
-      currentMode = 'radius';
-      mostrarStatus('loading', `Buscando poblados en un radio de ${radius} km...`);
-
-      try {
-        const { data, error } = await supabase.rpc('get_poblados_within_radius', {
-          center_lat: userLocation.lat,
-          center_lon: userLocation.lng,
-          radius_meters: radius * 1000
-        });
-
-        if (error) throw error;
-
-        filteredPoblados = data || [];
-        mostrarStatus('success', `✅ ${filteredPoblados.length} poblados encontrados en ${radius} km`);
-        
-        mostrarPobladosEnMapa();
-        actualizarListaPoblados();
-        actualizarEstadisticas();
-        
-        // Agregar círculo de radio al mapa
-        if (window.radiusCircle) {
-          map.removeLayer(window.radiusCircle);
-        }
-        window.radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
-          radius: radius * 1000,
-          fillColor: '#2563eb',
-          fillOpacity: 0.1,
-          color: '#2563eb',
-          weight: 2,
-          dashArray: '5, 5'
-        }).addTo(map);
-        
-        // Ajustar vista para incluir el círculo
-        const bounds = window.radiusCircle.getBounds();
-        map.fitBounds(bounds, { padding: [20, 20] });
-        
-      } catch (error) {
-        mostrarStatus('error', `❌ Error en búsqueda por radio: ${error.message}`);
-        console.error('Error:', error);
-      }
-    }
-
-    async function buscarMasCercano() {
-      if (!userLocation) {
-        mostrarStatus('error', '❌ Primero obtén tu ubicación o haz clic en el mapa');
-        return;
-      }
-
-      mostrarStatus('loading', 'Buscando poblado más cercano...');
-
-      try {
-        const { data, error } = await supabase.rpc('get_nearest_poblado', {
-          lat: userLocation.lat,
-          lon: userLocation.lng
-        });
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          const poblado = data[0];
-          selectPoblado(poblado);
-          
-          const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
-          mostrarStatus('success', `✅ Poblado más cercano: ${poblado.nombre} (${distanceKm} km)`);
-        } else {
-          mostrarStatus('error', '❌ No se encontró ningún poblado cercano');
-        }
-        
-      } catch (error) {
-        mostrarStatus('error', `❌ Error buscando poblado más cercano: ${error.message}`);
-        console.error('Error:', error);
-      }
-    }
-
-    function obtenerUbicacion() {
-      if (!navigator.geolocation) {
-        mostrarStatus('error', '❌ Geolocalización no soportada en este navegador');
-        return;
-      }
-
-      mostrarStatus('loading', 'Obteniendo tu ubicación...');
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          mostrarStatus('success', '✅ Ubicación obtenida correctamente');
-          
-          // Agregar marcador de usuario
-          if (window.userMarker) {
-            map.removeLayer(window.userMarker);
-          }
-          
-          window.userMarker = L.marker([userLocation.lat, userLocation.lng], {
-            icon: L.divIcon({
-              html: `<div style="background: #ef4444; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); animation: pulse 2s infinite;"><i class="fas fa-user"></i></div>`,
-              className: 'user-marker',
-              iconSize: [30, 30],
-              iconAnchor: [15, 15]
-            })
-          }).addTo(map).bindPopup('📍 Tu ubicación actual');
-          
-          map.setView([userLocation.lat, userLocation.lng], 12);
-        },
-        (error) => {
-          let mensaje = 'Error obteniendo ubicación';
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              mensaje = 'Permiso de ubicación denegado. Puedes hacer clic en el mapa para seleccionar un punto.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              mensaje = 'Ubicación no disponible. Intenta hacer clic en el mapa.';
-              break;
-            case error.TIMEOUT:
-              mensaje = 'Tiempo de espera agotado. Intenta nuevamente.';
-              break;
-          }
-          mostrarStatus('error', `❌ ${mensaje}`);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
-    }
-
-    function onMapClick(e) {
-      // Siempre permitir seleccionar punto en el mapa
-      userLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
-      
-      // Agregar marcador temporal
-      if (window.userMarker) {
-        map.removeLayer(window.userMarker);
-      }
-      
-      window.userMarker = L.marker([userLocation.lat, userLocation.lng], {
-        icon: L.divIcon({
-          html: `<div style="background: #f59e0b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-crosshairs"></i></div>`,
-          className: 'search-marker',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
-        })
-      }).addTo(map).bindPopup('🎯 Punto de búsqueda seleccionado');
-      
-      mostrarStatus('success', '✅ Punto seleccionado. Ahora puedes buscar poblados cercanos.');
-    }
-
-    function fitAllMarkers() {
-      if (filteredPoblados.length === 0) {
-        mostrarStatus('error', '❌ No hay poblados para mostrar');
-        return;
-      }
-      
-      const group = new L.featureGroup(markersLayer.getLayers());
-      if (group.getBounds().isValid()) {
-        map.fitBounds(group.getBounds(), { padding: [20, 20] });
-        mostrarStatus('success', '✅ Vista ajustada a todos los poblados');
-      }
-    }
-
     function configurarEventos() {
-      // Búsqueda en tiempo real con debounce
+      // Búsqueda con debounce optimizado
       document.getElementById('searchInput').addEventListener('input', 
         debounce(() => {
           if (currentMode !== 'radius') {
             aplicarFiltros();
           }
-        }, 500)
+        }, 750) // Aumentamos el debounce para mejor performance
       );
       
-      // Limpiar círculo de radio al cambiar filtros
+      // Eventos de filtros
       ['provinciaFilter', 'tipoFilter'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
           if (window.radiusCircle) {
@@ -1108,18 +1525,13 @@
         });
       });
 
-      // Permitir búsqueda con Enter en el campo de radio
+      // Teclas de acceso rápido
       document.getElementById('radiusInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          buscarCercanos();
-        }
+        if (e.key === 'Enter') buscarCercanos();
       });
 
-      // Permitir búsqueda con Enter en el campo de búsqueda
       document.getElementById('searchInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          aplicarFiltros();
-        }
+        if (e.key === 'Enter') aplicarFiltros();
       });
     }
 
@@ -1135,31 +1547,70 @@
       };
     }
 
-    function mostrarStatus(tipo, mensaje) {
-      const status = document.getElementById('status');
-      status.className = `status ${tipo}`;
+    // Nueva función para notificaciones en el mapa
+    function mostrarNotificacionMapa(tipo, mensaje, duracion = 3000) {
+      const container = document.getElementById('mapNotifications');
       
       const iconos = {
-        loading: 'fas fa-spinner fa-spin',
-        success: 'fas fa-check-circle',
-        error: 'fas fa-exclamation-triangle'
+        loading: '⏳',
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️'
       };
       
-      status.innerHTML = `<i class="${iconos[tipo]}"></i> ${mensaje}`;
+      const notification = document.createElement('div');
+      notification.className = `map-notification ${tipo}`;
+      notification.innerHTML = `${iconos[tipo]} ${mensaje}`;
       
-      // Auto-ocultar mensajes de éxito
-      if (tipo === 'success') {
+      container.appendChild(notification);
+      
+      // Auto-remover después del tiempo especificado (incluso para loading si no se remueve manualmente)
+      const autoRemoveTimer = setTimeout(() => {
+        if (notification.parentNode) {
+          notification.classList.add('removing');
+          setTimeout(() => {
+            if (notification.parentNode) {
+              container.removeChild(notification);
+            }
+          }, 200);
+        }
+      }, tipo === 'loading' ? 10000 : duracion); // Loading se auto-elimina después de 10 segundos como fallback
+      
+      // Guardar referencia del timer para poder cancelarlo
+      notification.autoRemoveTimer = autoRemoveTimer;
+      
+      // Limitar el número de notificaciones visibles
+      const notifications = container.querySelectorAll('.map-notification');
+      if (notifications.length > 3) {
+        const oldest = notifications[0];
+        oldest.classList.add('removing');
+        if (oldest.autoRemoveTimer) {
+          clearTimeout(oldest.autoRemoveTimer);
+        }
         setTimeout(() => {
-          if (status.classList.contains('success')) {
-            status.style.opacity = '0';
-            setTimeout(() => {
-              if (status.style.opacity === '0') {
-                status.innerHTML = '';
-                status.style.opacity = '1';
-              }
-            }, 300);
+          if (oldest.parentNode) {
+            container.removeChild(oldest);
           }
-        }, 3000);
+        }, 200);
+      }
+      
+      return notification;
+    }
+
+    // Función para remover notificación específica
+    function removerNotificacionMapa(notification) {
+      if (notification && notification.parentNode) {
+        // Cancelar el timer automático
+        if (notification.autoRemoveTimer) {
+          clearTimeout(notification.autoRemoveTimer);
+        }
+        
+        notification.classList.add('removing');
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 200);
       }
     }
 
@@ -1171,7 +1622,7 @@
       document.getElementById('visibleCount').textContent = visible.toLocaleString();
       document.getElementById('headerVisible').textContent = visible.toLocaleString();
       
-      // Animación de conteo
+      // Animación sutil de conteo
       animateNumber('headerTotal', total);
     }
 
@@ -1182,7 +1633,7 @@
       if (currentValue === targetValue) return;
       
       const increment = targetValue > currentValue ? 1 : -1;
-      const step = Math.abs(targetValue - currentValue) / 20;
+      const step = Math.abs(targetValue - currentValue) / 15; // Más rápido
       
       let current = currentValue;
       const timer = setInterval(() => {
@@ -1194,25 +1645,30 @@
         }
         
         element.textContent = current.toLocaleString();
-      }, 50);
+      }, 30); // Más fluido
     }
 
-    // Agregar estilos CSS para animaciones
+    // Agregar estilos de animación
     const style = document.createElement('style');
     style.textContent = `
       @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
       }
       
       .custom-popup .leaflet-popup-content-wrapper {
         border-radius: 8px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: none;
       }
       
       .custom-popup .leaflet-popup-tip {
         background: white;
+      }
+      
+      /* Optimizaciones visuales */
+      .leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
+        transition: transform 0.15s ease-out, opacity 0.15s ease-in;
       }
     `;
     document.head.appendChild(style);
