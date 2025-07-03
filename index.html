@@ -5,184 +5,429 @@
   <title>Geovisor de Poblados</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
+    
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #64748b;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       margin: 0; 
       padding: 0; 
       height: 100vh;
       display: flex;
       flex-direction: column;
+      background: var(--surface-2);
+      color: var(--text);
     }
     
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--gradient);
       color: white;
-      padding: 1rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .header-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     
     .header h1 {
       margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .stats-quick {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.9rem;
+    }
+    
+    .stat-quick {
+      text-align: center;
+    }
+    
+    .stat-quick-number {
       font-size: 1.5rem;
-      font-weight: 600;
+      font-weight: 700;
+      display: block;
     }
     
     .controls {
-      background: white;
-      padding: 1rem;
-      border-bottom: 1px solid #e0e0e0;
-      display: flex;
+      background: var(--surface);
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
     
     .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .control-group label {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.875rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
     
     select, input {
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      padding: 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
       font-size: 0.9rem;
+      transition: all 0.2s;
+      background: var(--surface);
     }
     
-    button {
-      background: #667eea;
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .controls-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      background: var(--primary);
       color: white;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 0.9rem;
-      transition: background 0.2s;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
     }
     
-    button:hover {
-      background: #5a6fd8;
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+    
+    .btn-secondary {
+      background: var(--secondary);
+    }
+    
+    .btn-secondary:hover {
+      background: #475569;
+    }
+    
+    .btn-success {
+      background: var(--success);
+    }
+    
+    .btn-success:hover {
+      background: #059669;
     }
     
     .main-content {
       flex: 1;
       display: flex;
       min-height: 0;
+      gap: 1rem;
+      padding: 1rem;
+    }
+    
+    .map-container {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      position: relative;
     }
     
     #map {
-      flex: 1;
-      min-height: 400px;
+      width: 100%;
+      height: 100%;
+      min-height: 500px;
+    }
+    
+    .map-overlay {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .map-control {
+      background: var(--surface);
+      border: none;
+      padding: 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: all 0.2s;
+    }
+    
+    .map-control:hover {
+      background: var(--surface-2);
+      transform: scale(1.05);
     }
     
     .sidebar {
-      width: 350px;
-      background: #f8f9fa;
-      border-left: 1px solid #e0e0e0;
-      overflow-y: auto;
+      width: 400px;
+      background: var(--surface);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
       display: flex;
       flex-direction: column;
     }
     
     .sidebar-header {
-      padding: 1rem;
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
-      font-weight: 600;
+      padding: 1.5rem;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
-    .stats {
-      padding: 1rem;
-      background: white;
-      margin-bottom: 1rem;
+    .stats-grid {
+      padding: 1.5rem;
+      background: var(--surface);
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
+      border-bottom: 1px solid var(--border);
     }
     
-    .stat-item {
+    .stat-card {
       text-align: center;
-      padding: 0.5rem;
-      background: #f8f9fa;
-      border-radius: 4px;
+      padding: 1rem;
+      background: var(--surface-2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
     }
     
     .stat-number {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #667eea;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: block;
     }
     
     .stat-label {
-      font-size: 0.8rem;
-      color: #666;
+      font-size: 0.85rem;
+      color: var(--text-muted);
       margin-top: 0.25rem;
     }
     
     .poblado-list {
       flex: 1;
+      overflow-y: auto;
       padding: 0;
     }
     
     .poblado-item {
-      padding: 1rem;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      position: relative;
     }
     
     .poblado-item:hover {
-      background: #e3f2fd;
+      background: var(--surface-2);
+      transform: translateX(4px);
     }
     
     .poblado-item.selected {
-      background: #bbdefb;
-      border-left: 4px solid #667eea;
+      background: rgba(37, 99, 235, 0.1);
+      border-left: 4px solid var(--primary);
     }
     
     .poblado-name {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 0.25rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
     .poblado-info {
-      font-size: 0.85rem;
-      color: #666;
-      line-height: 1.4;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem;
+    }
+    
+    .poblado-tag {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
     
     .loading {
       text-align: center;
-      padding: 2rem;
-      color: #666;
+      padding: 3rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     .status {
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      margin: 0.5rem 0;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 0.5rem 1rem;
       font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: slideIn 0.3s ease-out;
     }
     
-    .status.success { background: #d4edda; color: #155724; }
-    .status.error { background: #f8d7da; color: #721c24; }
-    .status.loading { background: #d1ecf1; color: #0c5460; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .status.success { 
+      background: rgba(16, 185, 129, 0.1); 
+      color: #065f46; 
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .status.error { 
+      background: rgba(239, 68, 68, 0.1); 
+      color: #991b1b; 
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .status.loading { 
+      background: rgba(6, 182, 212, 0.1); 
+      color: #155e75; 
+      border: 1px solid rgba(6, 182, 212, 0.2);
+    }
 
-    @media (max-width: 768px) {
+    .distance-info {
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    @media (max-width: 1024px) {
       .main-content {
         flex-direction: column;
       }
       .sidebar {
         width: 100%;
-        height: 300px;
+        height: 400px;
+      }
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+      .stats-quick {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        padding: 1rem;
+      }
+      .header h1 {
+        font-size: 1.25rem;
       }
       .controls {
-        flex-direction: column;
-        align-items: stretch;
+        padding: 1rem;
+      }
+      .main-content {
+        padding: 0.5rem;
       }
     }
   </style>
@@ -190,65 +435,122 @@
 <body>
 
   <div class="header">
-    <h1>🗺️ Geovisor de Poblados</h1>
+    <div class="header-content">
+      <h1>
+        <i class="fas fa-map-marked-alt"></i>
+        Geovisor de Poblados
+      </h1>
+      <div class="stats-quick">
+        <div class="stat-quick">
+          <span class="stat-quick-number" id="headerTotal">0</span>
+          <span>Total</span>
+        </div>
+        <div class="stat-quick">
+          <span class="stat-quick-number" id="headerVisible">0</span>
+          <span>Visibles</span>
+        </div>
+        <div class="stat-quick">
+          <span class="stat-quick-number" id="headerProvincias">0</span>
+          <span>Provincias</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="controls">
-    <div class="control-group">
-      <label>Provincia:</label>
-      <select id="provinciaFilter">
-        <option value="">Todas las provincias</option>
-      </select>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label><i class="fas fa-map-marker-alt"></i> Provincia</label>
+        <select id="provinciaFilter">
+          <option value="">Todas las provincias</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label><i class="fas fa-building"></i> Tipo</label>
+        <select id="tipoFilter">
+          <option value="">Todos los tipos</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label><i class="fas fa-search"></i> Buscar</label>
+        <input type="text" id="searchInput" placeholder="Nombre del poblado..." />
+      </div>
+
+      <div class="control-group">
+        <label><i class="fas fa-crosshairs"></i> Radio (km)</label>
+        <input type="number" id="radiusInput" placeholder="Radio en km" min="1" max="500" />
+      </div>
     </div>
     
-    <div class="control-group">
-      <label>Tipo:</label>
-      <select id="tipoFilter">
-        <option value="">Todos los tipos</option>
-      </select>
+    <div class="controls-actions">
+      <button class="btn" onclick="aplicarFiltros()">
+        <i class="fas fa-filter"></i> Aplicar Filtros
+      </button>
+      <button class="btn btn-secondary" onclick="limpiarFiltros()">
+        <i class="fas fa-eraser"></i> Limpiar
+      </button>
+      <button class="btn btn-success" onclick="buscarCercanos()">
+        <i class="fas fa-location-arrow"></i> Buscar Cercanos
+      </button>
+      <button class="btn btn-secondary" onclick="obtenerUbicacion()">
+        <i class="fas fa-crosshairs"></i> Mi Ubicación
+      </button>
     </div>
-    
-    <div class="control-group">
-      <label>Buscar:</label>
-      <input type="text" id="searchInput" placeholder="Nombre del poblado..." />
-    </div>
-    
-    <button onclick="aplicarFiltros()">Aplicar Filtros</button>
-    <button onclick="limpiarFiltros()">Limpiar</button>
   </div>
 
   <div id="status"></div>
 
   <div class="main-content">
-    <div id="map"></div>
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="map-overlay">
+        <button class="map-control" onclick="fitAllMarkers()" title="Ver todos">
+          <i class="fas fa-expand-arrows-alt"></i>
+        </button>
+        <button class="map-control" onclick="buscarMasCercano()" title="Más cercano">
+          <i class="fas fa-bullseye"></i>
+        </button>
+      </div>
+    </div>
     
     <div class="sidebar">
       <div class="sidebar-header">
-        <div>Poblados Encontrados</div>
+        <i class="fas fa-list"></i>
+        Poblados Encontrados
       </div>
       
-      <div class="stats">
-        <div class="stat-item">
-          <div class="stat-number" id="totalCount">0</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-number" id="totalCount">0</span>
           <div class="stat-label">Total</div>
         </div>
-        <div class="stat-item">
-          <div class="stat-number" id="visibleCount">0</div>
+        <div class="stat-card">
+          <span class="stat-number" id="visibleCount">0</span>
           <div class="stat-label">Visibles</div>
         </div>
       </div>
       
       <div class="poblado-list" id="pobladoList">
-        <div class="loading">Cargando poblados...</div>
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <div>Cargando poblados...</div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Supabase JS Library -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     // Configuración de Supabase
     const SUPABASE_URL = 'https://sbkmybydshshxoiiimve.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNia215Ynlkc2hzaHhvaWlpbXZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyOTMwODIsImV4cCI6MjA2NTg2OTA4Mn0.ZsXSKy3pYGA9AA9oXJLzPkdEhryieF-5Z3XSREueEfc';
+
+    // Inicializar cliente de Supabase
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Variables globales
     let map;
@@ -256,174 +558,142 @@
     let poblados = [];
     let filteredPoblados = [];
     let selectedPoblado = null;
+    let userLocation = null;
+    let currentMode = 'all'; // 'all', 'filtered', 'radius'
 
     // Inicializar la aplicación
     window.addEventListener('DOMContentLoaded', async () => {
       initMap();
       await cargarDatosIniciales();
-      configurarFiltros();
+      configurarEventos();
     });
 
     function initMap() {
       // Centrar en Ecuador
       map = L.map('map').setView([-1.8312, -78.1834], 6);
       
-      // Agregar capa base
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+      // Agregar capa base con mejor estilo
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
       }).addTo(map);
       
       // Crear grupo de marcadores
       markersLayer = L.layerGroup().addTo(map);
+
+      // Eventos del mapa
+      map.on('click', onMapClick);
     }
 
     async function cargarDatosIniciales() {
       await Promise.all([
         cargarPoblados(),
         cargarProvincias(),
-        cargarTipos()
+        cargarTipos(),
+        cargarEstadisticas()
       ]);
     }
 
     async function cargarPoblados() {
-      const status = document.getElementById('status');
-      status.className = 'status loading';
-      status.textContent = '🔄 Cargando poblados desde Supabase...';
+      mostrarStatus('loading', 'Cargando poblados desde Supabase...');
 
       try {
-        console.log('Llamando a get_all_poblados...');
+        console.log('Llamando a get_all_poblados via Supabase...');
         
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_all_poblados`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        const { data, error } = await supabase.rpc('get_all_poblados');
 
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error(`Error ${response.status}: ${response.statusText} - ${errorText}`);
+        if (error) {
+          console.error('Error RPC:', error);
+          throw error;
         }
 
-        poblados = await response.json();
-        console.log('Poblados cargados:', poblados.length);
-        
+        poblados = data || [];
         filteredPoblados = [...poblados];
         
-        status.className = 'status success';
-        status.textContent = `✅ ${poblados.length} poblados cargados correctamente`;
+        mostrarStatus('success', `✅ ${poblados.length} poblados cargados correctamente`);
         
         mostrarPobladosEnMapa();
         actualizarListaPoblados();
         actualizarEstadisticas();
         
       } catch (error) {
-        console.error('Error completo:', error);
-        status.className = 'status error';
-        status.textContent = `❌ Error al cargar poblados: ${error.message}`;
+        console.error('Error cargando poblados:', error);
+        mostrarStatus('error', `❌ Error: ${error.message}`);
         
-        // Fallback: intentar con consulta REST directa
-        console.log('Intentando fallback con REST directo...');
+        // Fallback: usar consulta REST directa
         await cargarPobladosFallback();
       }
     }
 
     async function cargarPobladosFallback() {
-      const status = document.getElementById('status');
-      status.className = 'status loading';
-      status.textContent = '🔄 Intentando carga alternativa...';
+      mostrarStatus('loading', 'Intentando carga alternativa...');
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/poblados?select=*`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
+        const { data, error } = await supabase
+          .from('poblados')
+          .select('*');
 
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
+        if (error) throw error;
 
-        const data = await response.json();
-        
-        // Convertir los datos al formato esperado
+        // Convertir datos al formato esperado
         poblados = data.map(poblado => ({
           ...poblado,
-          geom_geojson: poblado.geom // REST devuelve geom directamente
+          geom_geojson: poblado.geom
         }));
         
         filteredPoblados = [...poblados];
         
-        status.className = 'status success';
-        status.textContent = `✅ ${poblados.length} poblados cargados (modo compatibilidad)`;
+        mostrarStatus('success', `✅ ${poblados.length} poblados cargados (modo compatibilidad)`);
         
         mostrarPobladosEnMapa();
         actualizarListaPoblados();
         actualizarEstadisticas();
         
       } catch (error) {
-        status.className = 'status error';
-        status.textContent = `❌ Error en carga alternativa: ${error.message}`;
+        mostrarStatus('error', `❌ Error en carga alternativa: ${error.message}`);
         console.error('Error en fallback:', error);
       }
     }
 
     async function cargarProvincias() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_unique_provincias`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        const { data, error } = await supabase.rpc('get_unique_provincias');
 
-        if (response.ok) {
-          const provincias = await response.json();
+        if (!error && data) {
           const select = document.getElementById('provinciaFilter');
           select.innerHTML = '<option value="">Todas las provincias</option>' +
-            provincias.map(p => `<option value="${p.provincia}">${p.provincia}</option>`).join('');
-        } else {
-          // Fallback: extraer provincias de los datos cargados
-          console.log('Usando fallback para provincias');
+            data.map(p => `<option value="${p.provincia}">${p.provincia}</option>`).join('');
         }
       } catch (error) {
         console.error('Error cargando provincias:', error);
-        // Se llenará con el fallback más tarde
       }
     }
 
     async function cargarTipos() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_unique_tipos`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        const { data, error } = await supabase.rpc('get_unique_tipos');
 
-        if (response.ok) {
-          const tipos = await response.json();
+        if (!error && data) {
           const select = document.getElementById('tipoFilter');
           select.innerHTML = '<option value="">Todos los tipos</option>' +
-            tipos.map(t => `<option value="${t.tipo}">${t.tipo}</option>`).join('');
-        } else {
-          // Fallback: extraer tipos de los datos cargados
-          console.log('Usando fallback para tipos');
+            data.map(t => `<option value="${t.tipo}">${t.tipo}</option>`).join('');
         }
       } catch (error) {
         console.error('Error cargando tipos:', error);
-        // Se llenará con el fallback más tarde
+      }
+    }
+
+    async function cargarEstadisticas() {
+      try {
+        const { data, error } = await supabase.rpc('get_poblados_stats');
+
+        if (!error && data && data.length > 0) {
+          const stats = data[0];
+          document.getElementById('headerTotal').textContent = stats.total_poblados;
+          document.getElementById('headerProvincias').textContent = stats.total_provincias;
+        }
+      } catch (error) {
+        console.error('Error cargando estadísticas:', error);
       }
     }
 
@@ -431,22 +701,23 @@
       markersLayer.clearLayers();
       
       filteredPoblados.forEach(poblado => {
-        // Manejar tanto geom_geojson (RPC) como geom (REST directo)
         const geom = poblado.geom_geojson || poblado.geom;
         
         if (geom && geom.coordinates) {
           const [lng, lat] = geom.coordinates;
           
-          // Crear icono personalizado según el tipo
           const icon = L.divIcon({
-            html: getIconForType(poblado.tipo),
+            html: `<div style="background: #2563eb; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">${getIconForType(poblado.tipo)}</div>`,
             className: 'custom-marker',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
           });
           
           const marker = L.marker([lat, lng], { icon })
-            .bindPopup(createPopupContent(poblado))
+            .bindPopup(createPopupContent(poblado), {
+              maxWidth: 300,
+              className: 'custom-popup'
+            })
             .addTo(markersLayer);
             
           marker.poblado = poblado;
@@ -454,24 +725,21 @@
         }
       });
 
-      // Si no se cargaron filtros por RPC, llenarlos ahora
-      if (poblados.length > 0) {
-        llenarFiltrosFallback();
-      }
+      // Llenar filtros si están vacíos
+      llenarFiltrosFallback();
     }
 
     function llenarFiltrosFallback() {
-      // Solo llenar si los selects están vacíos (RPC falló)
       const provinciaSelect = document.getElementById('provinciaFilter');
       const tipoSelect = document.getElementById('tipoFilter');
       
-      if (provinciaSelect.children.length === 1) {
+      if (provinciaSelect.children.length === 1 && poblados.length > 0) {
         const provincias = [...new Set(poblados.map(p => p.provincia).filter(Boolean))].sort();
         provinciaSelect.innerHTML = '<option value="">Todas las provincias</option>' +
           provincias.map(p => `<option value="${p}">${p}</option>`).join('');
       }
       
-      if (tipoSelect.children.length === 1) {
+      if (tipoSelect.children.length === 1 && poblados.length > 0) {
         const tipos = [...new Set(poblados.map(p => p.tipo).filter(Boolean))].sort();
         tipoSelect.innerHTML = '<option value="">Todos los tipos</option>' +
           tipos.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -480,8 +748,8 @@
 
     function getIconForType(tipo) {
       const icons = {
-        'ciudad': '🏙️',
-        'pueblo': '🏘️',
+        'ciudad': '🏙',
+        'pueblo': '🏘',
         'villa': '🏡',
         'aldea': '🏠',
         'default': '📍'
@@ -490,13 +758,24 @@
     }
 
     function createPopupContent(poblado) {
+      let distanceText = '';
+      if (userLocation && poblado.distance_meters !== undefined) {
+        const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
+        distanceText = `<div class="distance-info"><i class="fas fa-route"></i> ${distanceKm} km</div>`;
+      }
+
       return `
-        <div style="min-width: 200px;">
-          <h3 style="margin: 0 0 10px 0; color: #333;">${poblado.nombre}</h3>
-          <p style="margin: 5px 0;"><strong>Código:</strong> ${poblado.f_code || 'N/A'}</p>
-          <p style="margin: 5px 0;"><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</p>
-          <p style="margin: 5px 0;"><strong>Tipo:</strong> ${poblado.tipo || 'N/A'}</p>
-          <p style="margin: 5px 0;"><strong>SOC:</strong> ${poblado.soc || 'N/A'}</p>
+        <div style="min-width: 250px; font-family: 'Segoe UI', sans-serif;">
+          <h3 style="margin: 0 0 12px 0; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+            ${getIconForType(poblado.tipo)} ${poblado.nombre}
+          </h3>
+          ${distanceText}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem;">
+            <div><strong>Código:</strong> ${poblado.f_code || 'N/A'}</div>
+            <div><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</div>
+            <div><strong>Tipo:</strong> ${poblado.tipo || 'N/A'}</div>
+            <div><strong>SOC:</strong> ${poblado.soc || 'N/A'}</div>
+          </div>
         </div>
       `;
     }
@@ -505,25 +784,47 @@
       const lista = document.getElementById('pobladoList');
       
       if (filteredPoblados.length === 0) {
-        lista.innerHTML = '<div class="loading">No se encontraron poblados con los filtros aplicados</div>';
+        lista.innerHTML = `
+          <div class="loading">
+            <i class="fas fa-search" style="font-size: 2rem; color: #64748b;"></i>
+            <div>No se encontraron poblados con los filtros aplicados</div>
+          </div>
+        `;
         return;
       }
       
-      lista.innerHTML = filteredPoblados.map(poblado => `
-        <div class="poblado-item" onclick="selectPoblado(${JSON.stringify(poblado).replace(/"/g, '&quot;')})">
-          <div class="poblado-name">${poblado.nombre}</div>
-          <div class="poblado-info">
-            <div>${poblado.provincia} • ${poblado.tipo}</div>
-            <div>Código: ${poblado.f_code || 'N/A'}</div>
+      lista.innerHTML = filteredPoblados.map(poblado => {
+        let distanceText = '';
+        if (poblado.distance_meters !== undefined) {
+          const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
+          distanceText = `<div class="distance-info">📍 ${distanceKm} km</div>`;
+        }
+
+        return `
+          <div class="poblado-item" onclick="selectPoblado(${encodeURIComponent(JSON.stringify(poblado))})">
+            <div class="poblado-name">
+              ${getIconForType(poblado.tipo)} ${poblado.nombre}
+              <span class="poblado-tag">${poblado.tipo || 'N/A'}</span>
+            </div>
+            <div class="poblado-info">
+              <div><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</div>
+              <div><strong>Código:</strong> ${poblado.f_code || 'N/A'}</div>
+              <div><strong>SOC:</strong> ${poblado.soc || 'N/A'}</div>
+              ${distanceText}
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function selectPoblado(poblado) {
+      if (typeof poblado === 'string') {
+        poblado = JSON.parse(decodeURIComponent(poblado));
+      }
+      
       selectedPoblado = poblado;
       
-      // Actualizar selección visual en la lista
+      // Actualizar selección visual
       document.querySelectorAll('.poblado-item').forEach(item => {
         item.classList.remove('selected');
       });
@@ -532,63 +833,55 @@
         .find(item => item.textContent.includes(poblado.nombre));
       if (selectedItem) {
         selectedItem.classList.add('selected');
+        selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       
-      // Centrar mapa en el poblado seleccionado
+      // Centrar mapa
       const geom = poblado.geom_geojson || poblado.geom;
       if (geom && geom.coordinates) {
         const [lng, lat] = geom.coordinates;
-        map.setView([lat, lng], 12);
+        map.setView([lat, lng], 14);
       }
     }
 
-    function configurarFiltros() {
-      document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
-    }
-
     async function aplicarFiltros() {
-      const provinciaFiltro = document.getElementById('provinciaFilter').value;
-      const tipoFiltro = document.getElementById('tipoFilter').value;
-      const busqueda = document.getElementById('searchInput').value.toLowerCase();
+      const provincia = document.getElementById('provinciaFilter').value;
+      const tipo = document.getElementById('tipoFilter').value;
+      const busqueda = document.getElementById('searchInput').value;
 
-      // Si no hay filtros, mostrar todos
-      if (!provinciaFiltro && !tipoFiltro && !busqueda) {
+      if (!provincia && !tipo && !busqueda) {
         filteredPoblados = [...poblados];
+        currentMode = 'all';
       } else {
-        // Intentar usar RPC primero, fallback a filtrado local
+        currentMode = 'filtered';
+        mostrarStatus('loading', 'Aplicando filtros...');
+
         try {
-          const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_poblados_advanced`, {
-            method: 'POST',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              search_name: busqueda || null,
-              filter_provincia: provinciaFiltro || null,
-              filter_tipo: tipoFiltro || null
-            })
+          const { data, error } = await supabase.rpc('search_poblados_advanced', {
+            search_name: busqueda || null,
+            filter_provincia: provincia || null,
+            filter_tipo: tipo || null
           });
 
-          if (response.ok) {
-            filteredPoblados = await response.json();
-          } else {
-            throw new Error('RPC failed');
-          }
+          if (error) throw error;
+
+          filteredPoblados = data || [];
+          mostrarStatus('success', `✅ Filtros aplicados: ${filteredPoblados.length} poblados encontrados`);
+          
         } catch (error) {
           console.log('Usando filtrado local:', error.message);
           // Fallback: filtrado local
           filteredPoblados = poblados.filter(poblado => {
-            const matchProvincia = !provinciaFiltro || poblado.provincia === provinciaFiltro;
-            const matchTipo = !tipoFiltro || poblado.tipo === tipoFiltro;
-            const matchBusqueda = !busqueda || poblado.nombre.toLowerCase().includes(busqueda);
+            const matchProvincia = !provincia || poblado.provincia === provincia;
+            const matchTipo = !tipo || poblado.tipo === tipo;
+            const matchBusqueda = !busqueda || poblado.nombre.toLowerCase().includes(busqueda.toLowerCase());
             
             return matchProvincia && matchTipo && matchBusqueda;
           });
+          mostrarStatus('success', `✅ ${filteredPoblados.length} poblados encontrados (filtrado local)`);
         }
       }
-      
+
       mostrarPobladosEnMapa();
       actualizarListaPoblados();
       actualizarEstadisticas();
@@ -598,13 +891,331 @@
       document.getElementById('provinciaFilter').value = '';
       document.getElementById('tipoFilter').value = '';
       document.getElementById('searchInput').value = '';
+      document.getElementById('radiusInput').value = '';
+      userLocation = null;
+      currentMode = 'all';
+      
+      // Limpiar marcadores y círculos adicionales
+      if (window.userMarker) {
+        map.removeLayer(window.userMarker);
+        window.userMarker = null;
+      }
+      if (window.radiusCircle) {
+        map.removeLayer(window.radiusCircle);
+        window.radiusCircle = null;
+      }
+      
       aplicarFiltros();
     }
 
-    function actualizarEstadisticas() {
-      document.getElementById('totalCount').textContent = poblados.length;
-      document.getElementById('visibleCount').textContent = filteredPoblados.length;
+    async function buscarCercanos() {
+      const radius = document.getElementById('radiusInput').value;
+      
+      if (!userLocation) {
+        mostrarStatus('error', '❌ Primero obtén tu ubicación o haz clic en el mapa');
+        return;
+      }
+      
+      if (!radius || radius <= 0) {
+        mostrarStatus('error', '❌ Ingresa un radio válido en km');
+        return;
+      }
+
+      currentMode = 'radius';
+      mostrarStatus('loading', `Buscando poblados en un radio de ${radius} km...`);
+
+      try {
+        const { data, error } = await supabase.rpc('get_poblados_within_radius', {
+          center_lat: userLocation.lat,
+          center_lon: userLocation.lng,
+          radius_meters: radius * 1000
+        });
+
+        if (error) throw error;
+
+        filteredPoblados = data || [];
+        mostrarStatus('success', `✅ ${filteredPoblados.length} poblados encontrados en ${radius} km`);
+        
+        mostrarPobladosEnMapa();
+        actualizarListaPoblados();
+        actualizarEstadisticas();
+        
+        // Agregar círculo de radio al mapa
+        if (window.radiusCircle) {
+          map.removeLayer(window.radiusCircle);
+        }
+        window.radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+          radius: radius * 1000,
+          fillColor: '#2563eb',
+          fillOpacity: 0.1,
+          color: '#2563eb',
+          weight: 2,
+          dashArray: '5, 5'
+        }).addTo(map);
+        
+        // Ajustar vista para incluir el círculo
+        const bounds = window.radiusCircle.getBounds();
+        map.fitBounds(bounds, { padding: [20, 20] });
+        
+      } catch (error) {
+        mostrarStatus('error', `❌ Error en búsqueda por radio: ${error.message}`);
+        console.error('Error:', error);
+      }
     }
+
+    async function buscarMasCercano() {
+      if (!userLocation) {
+        mostrarStatus('error', '❌ Primero obtén tu ubicación o haz clic en el mapa');
+        return;
+      }
+
+      mostrarStatus('loading', 'Buscando poblado más cercano...');
+
+      try {
+        const { data, error } = await supabase.rpc('get_nearest_poblado', {
+          lat: userLocation.lat,
+          lon: userLocation.lng
+        });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const poblado = data[0];
+          selectPoblado(poblado);
+          
+          const distanceKm = (poblado.distance_meters / 1000).toFixed(1);
+          mostrarStatus('success', `✅ Poblado más cercano: ${poblado.nombre} (${distanceKm} km)`);
+        } else {
+          mostrarStatus('error', '❌ No se encontró ningún poblado cercano');
+        }
+        
+      } catch (error) {
+        mostrarStatus('error', `❌ Error buscando poblado más cercano: ${error.message}`);
+        console.error('Error:', error);
+      }
+    }
+
+    function obtenerUbicacion() {
+      if (!navigator.geolocation) {
+        mostrarStatus('error', '❌ Geolocalización no soportada en este navegador');
+        return;
+      }
+
+      mostrarStatus('loading', 'Obteniendo tu ubicación...');
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          mostrarStatus('success', '✅ Ubicación obtenida correctamente');
+          
+          // Agregar marcador de usuario
+          if (window.userMarker) {
+            map.removeLayer(window.userMarker);
+          }
+          
+          window.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+            icon: L.divIcon({
+              html: `<div style="background: #ef4444; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); animation: pulse 2s infinite;"><i class="fas fa-user"></i></div>`,
+              className: 'user-marker',
+              iconSize: [30, 30],
+              iconAnchor: [15, 15]
+            })
+          }).addTo(map).bindPopup('📍 Tu ubicación actual');
+          
+          map.setView([userLocation.lat, userLocation.lng], 12);
+        },
+        (error) => {
+          let mensaje = 'Error obteniendo ubicación';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              mensaje = 'Permiso de ubicación denegado. Puedes hacer clic en el mapa para seleccionar un punto.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              mensaje = 'Ubicación no disponible. Intenta hacer clic en el mapa.';
+              break;
+            case error.TIMEOUT:
+              mensaje = 'Tiempo de espera agotado. Intenta nuevamente.';
+              break;
+          }
+          mostrarStatus('error', `❌ ${mensaje}`);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    }
+
+    function onMapClick(e) {
+      // Siempre permitir seleccionar punto en el mapa
+      userLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+      
+      // Agregar marcador temporal
+      if (window.userMarker) {
+        map.removeLayer(window.userMarker);
+      }
+      
+      window.userMarker = L.marker([userLocation.lat, userLocation.lng], {
+        icon: L.divIcon({
+          html: `<div style="background: #f59e0b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-crosshairs"></i></div>`,
+          className: 'search-marker',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        })
+      }).addTo(map).bindPopup('🎯 Punto de búsqueda seleccionado');
+      
+      mostrarStatus('success', '✅ Punto seleccionado. Ahora puedes buscar poblados cercanos.');
+    }
+
+    function fitAllMarkers() {
+      if (filteredPoblados.length === 0) {
+        mostrarStatus('error', '❌ No hay poblados para mostrar');
+        return;
+      }
+      
+      const group = new L.featureGroup(markersLayer.getLayers());
+      if (group.getBounds().isValid()) {
+        map.fitBounds(group.getBounds(), { padding: [20, 20] });
+        mostrarStatus('success', '✅ Vista ajustada a todos los poblados');
+      }
+    }
+
+    function configurarEventos() {
+      // Búsqueda en tiempo real con debounce
+      document.getElementById('searchInput').addEventListener('input', 
+        debounce(() => {
+          if (currentMode !== 'radius') {
+            aplicarFiltros();
+          }
+        }, 500)
+      );
+      
+      // Limpiar círculo de radio al cambiar filtros
+      ['provinciaFilter', 'tipoFilter'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => {
+          if (window.radiusCircle) {
+            map.removeLayer(window.radiusCircle);
+            window.radiusCircle = null;
+          }
+          if (currentMode === 'radius') {
+            currentMode = 'filtered';
+          }
+        });
+      });
+
+      // Permitir búsqueda con Enter en el campo de radio
+      document.getElementById('radiusInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          buscarCercanos();
+        }
+      });
+
+      // Permitir búsqueda con Enter en el campo de búsqueda
+      document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          aplicarFiltros();
+        }
+      });
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    function mostrarStatus(tipo, mensaje) {
+      const status = document.getElementById('status');
+      status.className = `status ${tipo}`;
+      
+      const iconos = {
+        loading: 'fas fa-spinner fa-spin',
+        success: 'fas fa-check-circle',
+        error: 'fas fa-exclamation-triangle'
+      };
+      
+      status.innerHTML = `<i class="${iconos[tipo]}"></i> ${mensaje}`;
+      
+      // Auto-ocultar mensajes de éxito
+      if (tipo === 'success') {
+        setTimeout(() => {
+          if (status.classList.contains('success')) {
+            status.style.opacity = '0';
+            setTimeout(() => {
+              if (status.style.opacity === '0') {
+                status.innerHTML = '';
+                status.style.opacity = '1';
+              }
+            }, 300);
+          }
+        }, 3000);
+      }
+    }
+
+    function actualizarEstadisticas() {
+      const total = poblados.length;
+      const visible = filteredPoblados.length;
+      
+      document.getElementById('totalCount').textContent = total.toLocaleString();
+      document.getElementById('visibleCount').textContent = visible.toLocaleString();
+      document.getElementById('headerVisible').textContent = visible.toLocaleString();
+      
+      // Animación de conteo
+      animateNumber('headerTotal', total);
+    }
+
+    function animateNumber(elementId, targetValue) {
+      const element = document.getElementById(elementId);
+      const currentValue = parseInt(element.textContent.replace(/,/g, '')) || 0;
+      
+      if (currentValue === targetValue) return;
+      
+      const increment = targetValue > currentValue ? 1 : -1;
+      const step = Math.abs(targetValue - currentValue) / 20;
+      
+      let current = currentValue;
+      const timer = setInterval(() => {
+        current += increment * Math.max(1, Math.floor(step));
+        
+        if ((increment > 0 && current >= targetValue) || (increment < 0 && current <= targetValue)) {
+          current = targetValue;
+          clearInterval(timer);
+        }
+        
+        element.textContent = current.toLocaleString();
+      }, 50);
+    }
+
+    // Agregar estilos CSS para animaciones
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+      
+      .custom-popup .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      }
+      
+      .custom-popup .leaflet-popup-tip {
+        background: white;
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 
 </body>
