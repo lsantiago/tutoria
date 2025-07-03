@@ -1,555 +1,611 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geoportal UTPL - Monitoreo Sísmico</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <title>Geovisor de Poblados</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .controls {
+      background: white;
+      padding: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    select, input {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #5a6fd8;
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+    
+    #map {
+      flex: 1;
+      min-height: 400px;
+    }
+    
+    .sidebar {
+      width: 350px;
+      background: #f8f9fa;
+      border-left: 1px solid #e0e0e0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sidebar-header {
+      padding: 1rem;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      font-weight: 600;
+    }
+    
+    .stats {
+      padding: 1rem;
+      background: white;
+      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+    
+    .poblado-list {
+      flex: 1;
+      padding: 0;
+    }
+    
+    .poblado-item {
+      padding: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .poblado-item:hover {
+      background: #e3f2fd;
+    }
+    
+    .poblado-item.selected {
+      background: #bbdefb;
+      border-left: 4px solid #667eea;
+    }
+    
+    .poblado-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.25rem;
+    }
+    
+    .poblado-info {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.4;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+    
+    .status {
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+    
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.loading { background: #d1ecf1; color: #0c5460; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 2rem;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-        }
-        
-        .logo h1 i {
-            margin-right: 0.5rem;
-            font-size: 1.6rem;
-        }
-
-        .logo .subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .nav-menu {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-item {
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-        }
-        
-        .nav-item i {
-            font-size: 1rem;
-        }
-
-        .nav-item:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        .nav-item.active {
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        .main-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 2rem;
-            height: calc(100vh - 120px);
-        }
-
-        .map-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .map-header {
-            background: #34495e;
-            color: white;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .map-header h3 {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .map-header h3 i {
-            font-size: 1.2rem;
-        }
-
-        .map-controls {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .control-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-        }
-        
-        .control-btn i {
-            font-size: 0.9rem;
-        }
-
-        .control-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        #map {
-            height: calc(100% - 60px);
-            width: 100%;
-        }
-
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .panel {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .panel-header {
-            background: #e74c3c;
-            color: white;
-            padding: 1rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .panel-header i {
-            font-size: 1.1rem;
-        }
-
-        .panel-content {
-            padding: 1rem;
-        }
-
-        .seismic-alert {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-level {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .recent-earthquakes {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .earthquake-item {
-            border-bottom: 1px solid #eee;
-            padding: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .earthquake-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        .earthquake-item:last-child {
-            border-bottom: none;
-        }
-
-        .magnitude {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #e74c3c;
-            margin-bottom: 0.5rem;
-        }
-
-        .location {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.3rem;
-        }
-
-        .datetime {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-        }
-
-        .statistics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #e74c3c;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-        }
-
-        .legend {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-        }
-
-        .magnitude-1-3 { background-color: #2ecc71; }
-        .magnitude-3-5 { background-color: #f39c12; }
-        .magnitude-5-7 { background-color: #e67e22; }
-        .magnitude-7-plus { background-color: #e74c3c; }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #7f8c8d;
-        }
-
-        @media (max-width: 768px) {
-            .main-container {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-    </style>
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: 300px;
+      }
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <div>
-                    <h1><i class="fas fa-globe-americas"></i> Geoportal UTPL</h1>
-                    <div class="subtitle">Sistema de Monitoreo Sísmico - Ecuador</div>
-                </div>
-            </div>
-            <nav class="nav-menu">
-                <div class="nav-item active"><i class="fas fa-map"></i> Mapa</div>
-                <div class="nav-item"><i class="fas fa-chart-line"></i> Estadísticas</div>
-                <div class="nav-item"><i class="fas fa-bell"></i> Alertas</div>
-                <div class="nav-item"><i class="fas fa-info-circle"></i> Información</div>
-            </nav>
-        </div>
-    </header>
 
-    <div class="main-container">
-        <div class="map-container">
-            <div class="map-header">
-                <h3><i class="fas fa-map-marked-alt"></i> Mapa de Actividad Sísmica</h3>
-                <div class="map-controls">
-                    <button class="control-btn" onclick="toggleLayer('recent')">
-                        <i class="fas fa-clock"></i> Últimas 24h
-                    </button>
-                    <button class="control-btn" onclick="toggleLayer('stations')">
-                        <i class="fas fa-broadcast-tower"></i> Estaciones
-                    </button>
-                    <button class="control-btn" onclick="centerMap()">
-                        <i class="fas fa-crosshairs"></i> Centrar
-                    </button>
-                </div>
-            </div>
-            <div id="map"></div>
-        </div>
+  <div class="header">
+    <h1>🗺️ Geovisor de Poblados</h1>
+  </div>
 
-        <div class="sidebar">
-            <div class="panel">
-                <div class="panel-header">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Estado de Alerta
-                </div>
-                <div class="panel-content">
-                    <div class="seismic-alert">
-                        <div class="alert-level">NIVEL: VERDE</div>
-                        <div>Actividad sísmica normal para la región</div>
-                    </div>
-                    <div class="statistics">
-                        <div class="stat-item">
-                            <div class="stat-value">12</div>
-                            <div class="stat-label">Sismos hoy</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">4.2</div>
-                            <div class="stat-label">Máx. magnitud</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <i class="fas fa-list"></i>
-                    Sismos Recientes
-                </div>
-                <div class="panel-content">
-                    <div class="recent-earthquakes" id="earthquakeList">
-                        <div class="loading">
-                            <i class="fas fa-spinner fa-spin"></i> Cargando datos sísmicos...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">
-                    <i class="fas fa-palette"></i>
-                    Leyenda
-                </div>
-                <div class="panel-content">
-                    <div class="legend">
-                        <div class="legend-item">
-                            <div class="legend-color magnitude-1-3"></div>
-                            <span>Magnitud 1.0 - 3.0</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color magnitude-3-5"></div>
-                            <span>Magnitud 3.0 - 5.0</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color magnitude-5-7"></div>
-                            <span>Magnitud 5.0 - 7.0</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color magnitude-7-plus"></div>
-                            <span>Magnitud 7.0+</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="controls">
+    <div class="control-group">
+      <label>Provincia:</label>
+      <select id="provinciaFilter">
+        <option value="">Todas las provincias</option>
+      </select>
     </div>
+    
+    <div class="control-group">
+      <label>Tipo:</label>
+      <select id="tipoFilter">
+        <option value="">Todos los tipos</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label>Buscar:</label>
+      <input type="text" id="searchInput" placeholder="Nombre del poblado..." />
+    </div>
+    
+    <button onclick="aplicarFiltros()">Aplicar Filtros</button>
+    <button onclick="limpiarFiltros()">Limpiar</button>
+  </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script>
-        // Inicializar el mapa centrado en Ecuador
-        const map = L.map('map').setView([-1.8312, -78.1834], 7);
+  <div id="status"></div>
 
-        // Agregar capa base
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+  <div class="main-content">
+    <div id="map"></div>
+    
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div>Poblados Encontrados</div>
+      </div>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-number" id="totalCount">0</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="visibleCount">0</div>
+          <div class="stat-label">Visibles</div>
+        </div>
+      </div>
+      
+      <div class="poblado-list" id="pobladoList">
+        <div class="loading">Cargando poblados...</div>
+      </div>
+    </div>
+  </div>
 
-        // Datos de ejemplo de sismos recientes en Ecuador
-        const earthquakeData = [
-            {
-                lat: -0.1807,
-                lng: -78.4678,
-                magnitude: 4.2,
-                location: "Quito, Pichincha",
-                time: "2025-06-25 08:30:15",
-                depth: 15.2
-            },
-            {
-                lat: -2.9001,
-                lng: -79.0059,
-                magnitude: 3.8,
-                location: "Cuenca, Azuay",
-                time: "2025-06-25 06:45:22",
-                depth: 8.7
-            },
-            {
-                lat: -0.9671,
-                lng: -80.7124,
-                magnitude: 5.1,
-                location: "Esmeraldas, Costa",
-                time: "2025-06-24 22:15:33",
-                depth: 25.4
-            },
-            {
-                lat: -1.2584,
-                lng: -78.6267,
-                magnitude: 2.9,
-                location: "Latacunga, Cotopaxi",
-                time: "2025-06-24 19:20:11",
-                depth: 12.1
-            },
-            {
-                lat: -2.1962,
-                lng: -79.8862,
-                magnitude: 4.5,
-                location: "Guayaquil, Guayas",
-                time: "2025-06-24 15:30:45",
-                depth: 18.9
-            }
-        ];
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Configuración de Supabase
+    const SUPABASE_URL = 'https://sbkmybydshshxoiiimve.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNia215Ynlkc2hzaHhvaWlpbXZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyOTMwODIsImV4cCI6MjA2NTg2OTA4Mn0.ZsXSKy3pYGA9AA9oXJLzPkdEhryieF-5Z3XSREueEfc';
 
-        // Función para obtener color según magnitud
-        function getMagnitudeColor(magnitude) {
-            if (magnitude >= 7) return '#e74c3c';
-            if (magnitude >= 5) return '#e67e22';
-            if (magnitude >= 3) return '#f39c12';
-            return '#2ecc71';
-        }
+    // Variables globales
+    let map;
+    let markersLayer;
+    let poblados = [];
+    let filteredPoblados = [];
+    let selectedPoblado = null;
 
-        // Función para obtener tamaño según magnitud
-        function getMagnitudeSize(magnitude) {
-            return Math.max(5, magnitude * 3);
-        }
+    // Inicializar la aplicación
+    window.addEventListener('DOMContentLoaded', async () => {
+      initMap();
+      await cargarDatosIniciales();
+      configurarFiltros();
+    });
 
-        // Agregar marcadores de sismos al mapa
-        earthquakeData.forEach(eq => {
-            const marker = L.circleMarker([eq.lat, eq.lng], {
-                radius: getMagnitudeSize(eq.magnitude),
-                fillColor: getMagnitudeColor(eq.magnitude),
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map);
+    function initMap() {
+      // Centrar en Ecuador
+      map = L.map('map').setView([-1.8312, -78.1834], 6);
+      
+      // Agregar capa base
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      // Crear grupo de marcadores
+      markersLayer = L.layerGroup().addTo(map);
+    }
 
-            marker.bindPopup(`
-                <div style="font-family: Arial, sans-serif;">
-                    <h4 style="margin: 0 0 10px 0; color: #e74c3c; display: flex; align-items: center; gap: 5px;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 1rem;"></i> 
-                        Magnitud ${eq.magnitude}
-                    </h4>
-                    <p style="margin: 5px 0;"><strong>Ubicación:</strong> ${eq.location}</p>
-                    <p style="margin: 5px 0;"><strong>Fecha:</strong> ${eq.time}</p>
-                    <p style="margin: 5px 0;"><strong>Profundidad:</strong> ${eq.depth} km</p>
-                </div>
-            `);
+    async function cargarDatosIniciales() {
+      await Promise.all([
+        cargarPoblados(),
+        cargarProvincias(),
+        cargarTipos()
+      ]);
+    }
+
+    async function cargarPoblados() {
+      const status = document.getElementById('status');
+      status.className = 'status loading';
+      status.textContent = '🔄 Cargando poblados desde Supabase...';
+
+      try {
+        console.log('Llamando a get_all_poblados...');
+        
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_all_poblados`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          }
         });
 
-        // Poblar lista de sismos recientes
-        function populateEarthquakeList() {
-            const listContainer = document.getElementById('earthquakeList');
-            listContainer.innerHTML = '';
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
 
-            earthquakeData.forEach((eq, index) => {
-                const item = document.createElement('div');
-                item.className = 'earthquake-item';
-                item.innerHTML = `
-                    <div class="magnitude">M ${eq.magnitude}</div>
-                    <div class="location">${eq.location}</div>
-                    <div class="datetime">${eq.time}</div>
-                `;
-                
-                item.addEventListener('click', () => {
-                    map.setView([eq.lat, eq.lng], 10);
-                });
-                
-                listContainer.appendChild(item);
-            });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`Error ${response.status}: ${response.statusText} - ${errorText}`);
         }
 
-        // Funciones de control del mapa
-        function toggleLayer(layerType) {
-            console.log(`Toggling layer: ${layerType}`);
-        }
+        poblados = await response.json();
+        console.log('Poblados cargados:', poblados.length);
+        
+        filteredPoblados = [...poblados];
+        
+        status.className = 'status success';
+        status.textContent = `✅ ${poblados.length} poblados cargados correctamente`;
+        
+        mostrarPobladosEnMapa();
+        actualizarListaPoblados();
+        actualizarEstadisticas();
+        
+      } catch (error) {
+        console.error('Error completo:', error);
+        status.className = 'status error';
+        status.textContent = `❌ Error al cargar poblados: ${error.message}`;
+        
+        // Fallback: intentar con consulta REST directa
+        console.log('Intentando fallback con REST directo...');
+        await cargarPobladosFallback();
+      }
+    }
 
-        function centerMap() {
-            map.setView([-1.8312, -78.1834], 7);
-        }
+    async function cargarPobladosFallback() {
+      const status = document.getElementById('status');
+      status.className = 'status loading';
+      status.textContent = '🔄 Intentando carga alternativa...';
 
-        // Navegación
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                this.classList.add('active');
-            });
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/poblados?select=*`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
         });
 
-        // Inicializar datos
-        populateEarthquakeList();
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
 
-        // Actualizar datos cada 30 segundos (simulado)
-        setInterval(() => {
-            console.log('Actualizando datos sísmicos...');
-        }, 30000);
-    </script>
+        const data = await response.json();
+        
+        // Convertir los datos al formato esperado
+        poblados = data.map(poblado => ({
+          ...poblado,
+          geom_geojson: poblado.geom // REST devuelve geom directamente
+        }));
+        
+        filteredPoblados = [...poblados];
+        
+        status.className = 'status success';
+        status.textContent = `✅ ${poblados.length} poblados cargados (modo compatibilidad)`;
+        
+        mostrarPobladosEnMapa();
+        actualizarListaPoblados();
+        actualizarEstadisticas();
+        
+      } catch (error) {
+        status.className = 'status error';
+        status.textContent = `❌ Error en carga alternativa: ${error.message}`;
+        console.error('Error en fallback:', error);
+      }
+    }
+
+    async function cargarProvincias() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_unique_provincias`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const provincias = await response.json();
+          const select = document.getElementById('provinciaFilter');
+          select.innerHTML = '<option value="">Todas las provincias</option>' +
+            provincias.map(p => `<option value="${p.provincia}">${p.provincia}</option>`).join('');
+        } else {
+          // Fallback: extraer provincias de los datos cargados
+          console.log('Usando fallback para provincias');
+        }
+      } catch (error) {
+        console.error('Error cargando provincias:', error);
+        // Se llenará con el fallback más tarde
+      }
+    }
+
+    async function cargarTipos() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_unique_tipos`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const tipos = await response.json();
+          const select = document.getElementById('tipoFilter');
+          select.innerHTML = '<option value="">Todos los tipos</option>' +
+            tipos.map(t => `<option value="${t.tipo}">${t.tipo}</option>`).join('');
+        } else {
+          // Fallback: extraer tipos de los datos cargados
+          console.log('Usando fallback para tipos');
+        }
+      } catch (error) {
+        console.error('Error cargando tipos:', error);
+        // Se llenará con el fallback más tarde
+      }
+    }
+
+    function mostrarPobladosEnMapa() {
+      markersLayer.clearLayers();
+      
+      filteredPoblados.forEach(poblado => {
+        // Manejar tanto geom_geojson (RPC) como geom (REST directo)
+        const geom = poblado.geom_geojson || poblado.geom;
+        
+        if (geom && geom.coordinates) {
+          const [lng, lat] = geom.coordinates;
+          
+          // Crear icono personalizado según el tipo
+          const icon = L.divIcon({
+            html: getIconForType(poblado.tipo),
+            className: 'custom-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          
+          const marker = L.marker([lat, lng], { icon })
+            .bindPopup(createPopupContent(poblado))
+            .addTo(markersLayer);
+            
+          marker.poblado = poblado;
+          marker.on('click', () => selectPoblado(poblado));
+        }
+      });
+
+      // Si no se cargaron filtros por RPC, llenarlos ahora
+      if (poblados.length > 0) {
+        llenarFiltrosFallback();
+      }
+    }
+
+    function llenarFiltrosFallback() {
+      // Solo llenar si los selects están vacíos (RPC falló)
+      const provinciaSelect = document.getElementById('provinciaFilter');
+      const tipoSelect = document.getElementById('tipoFilter');
+      
+      if (provinciaSelect.children.length === 1) {
+        const provincias = [...new Set(poblados.map(p => p.provincia).filter(Boolean))].sort();
+        provinciaSelect.innerHTML = '<option value="">Todas las provincias</option>' +
+          provincias.map(p => `<option value="${p}">${p}</option>`).join('');
+      }
+      
+      if (tipoSelect.children.length === 1) {
+        const tipos = [...new Set(poblados.map(p => p.tipo).filter(Boolean))].sort();
+        tipoSelect.innerHTML = '<option value="">Todos los tipos</option>' +
+          tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
+    }
+
+    function getIconForType(tipo) {
+      const icons = {
+        'ciudad': '🏙️',
+        'pueblo': '🏘️',
+        'villa': '🏡',
+        'aldea': '🏠',
+        'default': '📍'
+      };
+      return icons[tipo?.toLowerCase()] || icons.default;
+    }
+
+    function createPopupContent(poblado) {
+      return `
+        <div style="min-width: 200px;">
+          <h3 style="margin: 0 0 10px 0; color: #333;">${poblado.nombre}</h3>
+          <p style="margin: 5px 0;"><strong>Código:</strong> ${poblado.f_code || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>Provincia:</strong> ${poblado.provincia || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>Tipo:</strong> ${poblado.tipo || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>SOC:</strong> ${poblado.soc || 'N/A'}</p>
+        </div>
+      `;
+    }
+
+    function actualizarListaPoblados() {
+      const lista = document.getElementById('pobladoList');
+      
+      if (filteredPoblados.length === 0) {
+        lista.innerHTML = '<div class="loading">No se encontraron poblados con los filtros aplicados</div>';
+        return;
+      }
+      
+      lista.innerHTML = filteredPoblados.map(poblado => `
+        <div class="poblado-item" onclick="selectPoblado(${JSON.stringify(poblado).replace(/"/g, '&quot;')})">
+          <div class="poblado-name">${poblado.nombre}</div>
+          <div class="poblado-info">
+            <div>${poblado.provincia} • ${poblado.tipo}</div>
+            <div>Código: ${poblado.f_code || 'N/A'}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectPoblado(poblado) {
+      selectedPoblado = poblado;
+      
+      // Actualizar selección visual en la lista
+      document.querySelectorAll('.poblado-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      const selectedItem = Array.from(document.querySelectorAll('.poblado-item'))
+        .find(item => item.textContent.includes(poblado.nombre));
+      if (selectedItem) {
+        selectedItem.classList.add('selected');
+      }
+      
+      // Centrar mapa en el poblado seleccionado
+      const geom = poblado.geom_geojson || poblado.geom;
+      if (geom && geom.coordinates) {
+        const [lng, lat] = geom.coordinates;
+        map.setView([lat, lng], 12);
+      }
+    }
+
+    function configurarFiltros() {
+      document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+    }
+
+    async function aplicarFiltros() {
+      const provinciaFiltro = document.getElementById('provinciaFilter').value;
+      const tipoFiltro = document.getElementById('tipoFilter').value;
+      const busqueda = document.getElementById('searchInput').value.toLowerCase();
+
+      // Si no hay filtros, mostrar todos
+      if (!provinciaFiltro && !tipoFiltro && !busqueda) {
+        filteredPoblados = [...poblados];
+      } else {
+        // Intentar usar RPC primero, fallback a filtrado local
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_poblados_advanced`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              search_name: busqueda || null,
+              filter_provincia: provinciaFiltro || null,
+              filter_tipo: tipoFiltro || null
+            })
+          });
+
+          if (response.ok) {
+            filteredPoblados = await response.json();
+          } else {
+            throw new Error('RPC failed');
+          }
+        } catch (error) {
+          console.log('Usando filtrado local:', error.message);
+          // Fallback: filtrado local
+          filteredPoblados = poblados.filter(poblado => {
+            const matchProvincia = !provinciaFiltro || poblado.provincia === provinciaFiltro;
+            const matchTipo = !tipoFiltro || poblado.tipo === tipoFiltro;
+            const matchBusqueda = !busqueda || poblado.nombre.toLowerCase().includes(busqueda);
+            
+            return matchProvincia && matchTipo && matchBusqueda;
+          });
+        }
+      }
+      
+      mostrarPobladosEnMapa();
+      actualizarListaPoblados();
+      actualizarEstadisticas();
+    }
+
+    function limpiarFiltros() {
+      document.getElementById('provinciaFilter').value = '';
+      document.getElementById('tipoFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      aplicarFiltros();
+    }
+
+    function actualizarEstadisticas() {
+      document.getElementById('totalCount').textContent = poblados.length;
+      document.getElementById('visibleCount').textContent = filteredPoblados.length;
+    }
+  </script>
+
 </body>
 </html>
